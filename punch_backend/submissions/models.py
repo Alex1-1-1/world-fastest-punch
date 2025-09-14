@@ -5,9 +5,16 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 
 class UserProfile(models.Model):
     """ユーザープロフィールモデル"""
+    ROLE_CHOICES = [
+        ('USER', '一般ユーザー'),
+        ('JUDGE', '判定者'),
+        ('ADMIN', '管理者'),
+    ]
+    
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
     profile_image = models.ImageField(upload_to='profiles/', blank=True, null=True)
     bio = models.TextField(max_length=500, blank=True, help_text="自己紹介")
+    role = models.CharField(max_length=10, choices=ROLE_CHOICES, default='USER', help_text="ユーザー権限")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

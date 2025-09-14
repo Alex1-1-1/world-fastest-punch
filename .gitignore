@@ -16,6 +16,9 @@ build/
 .env.test.local
 .env.production.local
 
+# Development credentials (security)
+app/admin/signin/dev-credentials.md
+
 # Python
 __pycache__/
 *.py[cod]

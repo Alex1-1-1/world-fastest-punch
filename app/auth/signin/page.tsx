@@ -63,7 +63,10 @@ export default function SignInPage() {
         if (result?.error) {
           alert('ログインに失敗しました。メールアドレスとパスワードを確認してください。');
         } else {
-          window.location.href = '/app';
+          // URLパラメータからコールバックURLを取得
+          const urlParams = new URLSearchParams(window.location.search);
+          const callbackUrl = urlParams.get('callbackUrl') || '/app';
+          window.location.href = callbackUrl;
         }
       }
     } catch (error) {

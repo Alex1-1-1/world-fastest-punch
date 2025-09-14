@@ -1,5 +1,6 @@
 from rest_framework import generics, status
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser
 from django.shortcuts import get_object_or_404
@@ -18,7 +19,44 @@ from .serializers import (
 )
 from PIL import Image
 import os
+
+def admin_required(view_func):
+    """管理者権限が必要なデコレータ"""
+    def wrapper(request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return Response({'error': '認証が必要です'}, status=status.HTTP_401_UNAUTHORIZED)
+        
+        try:
+            profile = request.user.profile
+            if profile.role != 'ADMIN':
+                return Response({'error': '管理者権限が必要です'}, status=status.HTTP_403_FORBIDDEN)
+        except UserProfile.DoesNotExist:
+            return Response({'error': 'プロフィールが見つかりません'}, status=status.HTTP_404_NOT_FOUND)
+        
+        return view_func(request, *args, **kwargs)
+    return wrapper
 from django.conf import settings
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def change_password(request):
+    """パスワード変更"""
+    current_password = request.data.get('current_password')
+    new_password = request.data.get('new_password')
+    
+    if not current_password or not new_password:
+        return Response({'error': '現在のパスワードと新しいパスワードが必要です'}, status=status.HTTP_400_BAD_REQUEST)
+    
+    # 現在のパスワードを確認
+    if not request.user.check_password(current_password):
+        return Response({'error': '現在のパスワードが正しくありません'}, status=status.HTTP_400_BAD_REQUEST)
+    
+    # 新しいパスワードを設定
+    request.user.set_password(new_password)
+    request.user.save()
+    
+    return Response({'success': True})
 
 
 @api_view(['POST'])
@@ -79,6 +117,10 @@ def login_user(request):
 
         if user is None:
             return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
+
+        # セッションにログイン
+        from django.contrib.auth import login
+        login(request, user)
 
         return Response({
             'id': user.id,
@@ -320,11 +362,34 @@ class SubmissionDetailView(generics.RetrieveAPIView):
 
 
 class JudgmentCreateView(generics.CreateAPIView):
-    """判定作成ビュー"""
+    """判定作成ビュー（管理者のみ）"""
     queryset = Judgment.objects.all()
     serializer_class = JudgmentSerializer
+    permission_classes = [IsAuthenticated]
     
     def perform_create(self, serializer):
+        print(f"DEBUG: 判定エンドポイント開始")
+        print(f"DEBUG: リクエストユーザー: {self.request.user}")
+        print(f"DEBUG: 認証状態: {self.request.user.is_authenticated}")
+        print(f"DEBUG: セッションキー: {self.request.session.session_key}")
+        print(f"DEBUG: セッションデータ: {dict(self.request.session)}")
+        
+        # 管理者権限チェック
+        if not self.request.user.is_authenticated:
+            print("DEBUG: 認証エラー - ユーザーが認証されていません")
+            raise PermissionError('認証が必要です')
+        
+        try:
+            profile = self.request.user.profile
+            print(f"DEBUG: プロフィール取得成功 - ロール: {profile.role}")
+            if profile.role != 'ADMIN':
+                print("DEBUG: 権限エラー - 管理者権限がありません")
+                raise PermissionError('管理者権限が必要です')
+        except UserProfile.DoesNotExist:
+            print("DEBUG: プロフィールエラー - プロフィールが見つかりません")
+            raise PermissionError('プロフィールが見つかりません')
+        
+        # 判定処理
         submission_id = self.kwargs['submission_id']
         print(f"DEBUG: 判定処理開始 - 投稿ID: {submission_id}")
         print(f"DEBUG: リクエストデータ: {self.request.data}")

@@ -1,100 +1,109 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { prisma } from '@/lib/prisma'
-import { z } from 'zod'
 
-const judgmentSchema = z.object({
-  speed: z.number().min(0).max(1000),
-  comment: z.string().optional(),
-  status: z.enum(['APPROVED', 'REJECTED'])
-})
-
-// POST /api/admin/submissions/[id]/judge - 投稿を判定
+// POST /api/admin/submissions/[id]/judge - 投稿を判定（Django APIにプロキシ）
 export async function POST(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
+    console.log('=== 管理者判定API開始 ===');
+    console.log('Submission ID:', params.id);
+    
     const session = await getServerSession(authOptions)
+    console.log('セッション情報:', session);
+    
     if (!session?.user?.id) {
+      console.log('認証エラー: セッションなし');
       return NextResponse.json({ error: '認証が必要です' }, { status: 401 })
     }
 
-    // 実際の実装では管理者権限をチェック
-    // const isAdmin = await checkAdminRole(session.user.id)
-    // if (!isAdmin) {
-    //   return NextResponse.json({ error: '管理者権限が必要です' }, { status: 403 })
-    // }
+    // 管理者権限をチェック
+    const userRole = (session.user as any)?.role;
+    console.log('ユーザーロール:', userRole);
+    
+    if (userRole !== 'ADMIN') {
+      console.log('権限エラー: 管理者権限なし');
+      return NextResponse.json({ error: '管理者権限が必要です' }, { status: 403 })
+    }
 
     const body = await request.json()
-    const { speed, comment, status } = judgmentSchema.parse(body)
+    console.log('リクエストボディ:', body);
+    const { speed, comment, status } = body
 
-    const submission = await prisma.submission.findUnique({
-      where: { id: params.id }
-    })
+    // まずDjango APIにログインしてセッションを確立
+    console.log('Django APIにログイン中...');
+    const loginResponse = await fetch('http://localhost:8000/api/auth/login/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        email: session.user.email,
+        password: process.env.ADMIN_PASSWORD || 'admin123', // 管理者のパスワード
+      }),
+    });
 
-    if (!submission) {
-      return NextResponse.json({ error: '投稿が見つかりません' }, { status: 404 })
+    if (!loginResponse.ok) {
+      console.log('Django APIログイン失敗:', loginResponse.status);
+      return NextResponse.json(
+        { error: 'Django APIへのログインに失敗しました' },
+        { status: 500 }
+      )
     }
 
-    // 投稿を更新
-    const updatedSubmission = await prisma.submission.update({
-      where: { id: params.id },
-      data: {
-        speed,
-        comment,
-        status,
-        updatedAt: new Date()
-      }
+    const loginData = await loginResponse.json();
+    console.log('Django APIログイン成功:', loginData);
+
+    // セッションクッキーを取得
+    const setCookieHeader = loginResponse.headers.get('set-cookie');
+    console.log('セッションクッキー:', setCookieHeader);
+
+    const djangoUrl = `http://localhost:8000/api/submissions/${params.id}/judge/`;
+    const djangoBody = {
+      speed_kmh: speed,
+      metaphor_comment: comment,
+      judgment: status,
+      judge_name: '管理者',
+    };
+    
+    console.log('Django API URL:', djangoUrl);
+    console.log('Django API Body:', djangoBody);
+
+    // Django APIにプロキシ（セッションクッキー付き）
+    const djangoResponse = await fetch(djangoUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(setCookieHeader && { 'Cookie': setCookieHeader }),
+      },
+      credentials: 'include', // クッキーを送信
+      body: JSON.stringify(djangoBody),
     })
 
-    // 承認された場合、ランキングカテゴリを決定
-    if (status === 'APPROVED') {
-      let category: string
-      if (speed >= 100) category = 'VERY_FAST'
-      else if (speed >= 80) category = 'QUITE_FAST'
-      else if (speed >= 60) category = 'MODERATE'
-      else if (speed >= 40) category = 'SLOW'
-      else category = 'VERY_SLOW'
+    console.log('Django API レスポンスステータス:', djangoResponse.status);
+    console.log('Django API レスポンスヘッダー:', Object.fromEntries(djangoResponse.headers.entries()));
 
-      // 現在の週のランキングを更新
-      const now = new Date()
-      const week = Math.ceil((now.getTime() - new Date(now.getFullYear(), 0, 1).getTime()) / (7 * 24 * 60 * 60 * 1000))
-      const year = now.getFullYear()
-
-      // 既存のランキングエントリを削除
-      await prisma.ranking.deleteMany({
-        where: {
-          submissionId: params.id
-        }
-      })
-
-      // 新しいランキングエントリを作成
-      await prisma.ranking.create({
-        data: {
-          submissionId: params.id,
-          category: category as any,
-          position: 0, // 実際の実装では適切な位置を計算
-          week,
-          year
-        }
-      })
+    if (!djangoResponse.ok) {
+      const errorData = await djangoResponse.json()
+      console.log('Django API エラーデータ:', errorData);
+      return NextResponse.json(
+        { error: errorData.error || '判定に失敗しました' },
+        { status: djangoResponse.status }
+      )
     }
 
+    const result = await djangoResponse.json()
+    console.log('Django API 成功レスポンス:', result);
+    
     return NextResponse.json({
       success: true,
-      submission: updatedSubmission
+      result: result
     })
 
   } catch (error) {
     console.error('判定エラー:', error)
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: '入力データが無効です', details: error.errors },
-        { status: 400 }
-      )
-    }
     return NextResponse.json(
       { error: '判定に失敗しました' },
       { status: 500 }

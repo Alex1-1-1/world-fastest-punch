@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { signOut } from 'next-auth/react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -10,7 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { ImageIcon, Trophy, Flag, Users, Clock, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import { ImageIcon, Trophy, Flag, Users, Clock, CheckCircle, XCircle, AlertCircle, LogOut } from 'lucide-react';
 
 interface Submission {
   id: string;
@@ -40,7 +41,11 @@ interface Report {
   };
 }
 
-const AdminDashboard: React.FC = () => {
+interface AdminDashboardProps {
+  session?: any;
+}
+
+const AdminDashboard: React.FC<AdminDashboardProps> = ({ session }) => {
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [reports, setReports] = useState<Report[]>([]);
   const [loading, setLoading] = useState(true);
@@ -51,6 +56,7 @@ const AdminDashboard: React.FC = () => {
     status: 'APPROVED' as 'APPROVED' | 'REJECTED',
     rejectionReason: '',
   });
+  const [showLogoutDialog, setShowLogoutDialog] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -119,29 +125,35 @@ const AdminDashboard: React.FC = () => {
 
   const handleJudgment = async (submissionId: string) => {
     try {
+      console.log('=== 管理者判定開始 ===');
+      console.log('Submission ID:', submissionId);
+      console.log('判定フォーム:', judgmentForm);
+      console.log('セッション情報:', session);
+      
       if (judgmentForm.status === 'REJECTED' && !judgmentForm.rejectionReason) {
         alert('却下理由を選択してください');
         return;
       }
 
       const requestData = {
-        speed_kmh: judgmentForm.status === 'APPROVED' ? parseFloat(judgmentForm.speed) : 0,
-        metaphor_comment: judgmentForm.status === 'APPROVED' ? judgmentForm.comment : judgmentForm.rejectionReason,
-        judgment: judgmentForm.status,
-        judge_name: '管理者',
-        ...(judgmentForm.status === 'REJECTED' && { rejection_reason: judgmentForm.rejectionReason }),
+        speed: judgmentForm.status === 'APPROVED' ? parseFloat(judgmentForm.speed) : 0,
+        comment: judgmentForm.status === 'APPROVED' ? judgmentForm.comment : judgmentForm.rejectionReason,
+        status: judgmentForm.status,
       };
       
       console.log('送信データ:', requestData);
-      console.log('API URL:', `http://localhost:8000/api/submissions/${submissionId}/judge/`);
+      console.log('API URL:', `/api/admin/submissions/${submissionId}/judge`);
 
-      const response = await fetch(`http://localhost:8000/api/submissions/${submissionId}/judge/`, {
+      const response = await fetch(`/api/admin/submissions/${submissionId}/judge`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(requestData),
       });
+      
+      console.log('レスポンスステータス:', response.status);
+      console.log('レスポンスヘッダー:', Object.fromEntries(response.headers.entries()));
 
       if (response.ok) {
         const result = await response.json();
@@ -151,17 +163,10 @@ const AdminDashboard: React.FC = () => {
         setJudgmentForm({ speed: '5', comment: '', status: 'APPROVED', rejectionReason: '' });
         alert(judgmentForm.status === 'APPROVED' ? '承認しました' : '却下しました');
       } else {
+        console.log('エラーレスポンス受信');
         const errorData = await response.json();
         console.error('判定保存エラー:', errorData);
         console.error('エラーレスポンス:', response.status, response.statusText);
-        const requestData = {
-          speed_kmh: judgmentForm.status === 'APPROVED' ? parseFloat(judgmentForm.speed) : 0,
-          metaphor_comment: judgmentForm.status === 'APPROVED' ? judgmentForm.comment : judgmentForm.rejectionReason,
-          judgment: judgmentForm.status,
-          judge_name: '管理者',
-          ...(judgmentForm.status === 'REJECTED' && { rejection_reason: judgmentForm.rejectionReason }),
-        };
-        console.error('リクエストデータ:', requestData);
         
         // エラーメッセージをより分かりやすく表示
         let errorMessage = '判定の保存に失敗しました';
@@ -172,6 +177,7 @@ const AdminDashboard: React.FC = () => {
         } else if (errorData.non_field_errors) {
           errorMessage = `エラー: ${errorData.non_field_errors.join(', ')}`;
         }
+        console.log('表示するエラーメッセージ:', errorMessage);
         alert(errorMessage);
       }
     } catch (error) {
@@ -196,6 +202,18 @@ const AdminDashboard: React.FC = () => {
     } catch (error) {
       console.error('通報処理エラー:', error);
     }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await signOut({ callbackUrl: '/' });
+    } catch (error) {
+      console.error('ログアウトエラー:', error);
+    }
+  };
+
+  const handleLogoutClick = () => {
+    setShowLogoutDialog(true);
   };
 
   const getStatusBadge = (status: string) => {
@@ -240,11 +258,31 @@ const AdminDashboard: React.FC = () => {
           <div className="flex justify-between items-center">
             <div>
               <h1 className="text-3xl font-bold text-gray-900">管理者ダッシュボード</h1>
-              <p className="text-gray-600 mt-2">投稿の判定と管理を行います</p>
+              <p className="text-gray-600 mt-2">投稿の判定と管理を行う管理者専用画面</p>
+              <div className="mt-2 flex items-center space-x-2">
+                <Badge variant="outline" className="text-red-600 border-red-600">
+                  <AlertCircle className="h-3 w-3 mr-1" />
+                  管理者権限が必要
+                </Badge>
+                <Badge variant="outline" className="text-blue-600 border-blue-600">
+                  <Users className="h-3 w-3 mr-1" />
+                  投稿の承認・却下
+                </Badge>
+              </div>
             </div>
-            <Button onClick={fetchData} disabled={loading}>
-              {loading ? '更新中...' : 'データを更新'}
-            </Button>
+            <div className="flex items-center space-x-3">
+              <Button onClick={fetchData} disabled={loading}>
+                {loading ? '更新中...' : 'データを更新'}
+              </Button>
+              <Button 
+                onClick={handleLogoutClick}
+                variant="outline"
+                className="text-red-600 border-red-600 hover:bg-red-50"
+              >
+                <LogOut className="h-4 w-4 mr-2" />
+                ログアウト
+              </Button>
+            </div>
           </div>
         </div>
 
@@ -537,6 +575,31 @@ const AdminDashboard: React.FC = () => {
             </AlertDialogContent>
           </AlertDialog>
         )}
+
+        {/* ログアウト確認ダイアログ */}
+        <AlertDialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle className="flex items-center">
+                <LogOut className="h-5 w-5 mr-2 text-red-600" />
+                ログアウトの確認
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                管理者ダッシュボードからログアウトしますか？<br />
+                ログアウト後は一般ユーザーサイトに戻ります。
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>キャンセル</AlertDialogCancel>
+              <AlertDialogAction 
+                onClick={handleLogout}
+                className="bg-red-600 hover:bg-red-700"
+              >
+                ログアウト
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </div>
   );

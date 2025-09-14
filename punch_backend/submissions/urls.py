@@ -7,6 +7,7 @@ urlpatterns = [
     path('auth/login/', views.login_user, name='login-user'),
     path('auth/register/', views.register_user, name='register-user'),
     path('auth/reset-password/', views.reset_password, name='reset-password'),
+    path('account/change-password/', views.change_password, name='change-password'),
     
     # 投稿関連
     path('submissions/', views.SubmissionListCreateView.as_view(), name='submission-list-create'),

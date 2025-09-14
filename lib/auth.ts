@@ -55,6 +55,20 @@ export const authOptions: NextAuthOptions = {
         token.email = user.email;
         token.name = user.name;
         token.picture = user.image;
+        
+        // Django APIからユーザーのロール情報を取得
+        try {
+          const response = await fetch('http://localhost:8000/api/profile/');
+          if (response.ok) {
+            const profile = await response.json();
+            token.role = profile.role || 'USER';
+          } else {
+            token.role = 'USER';
+          }
+        } catch (error) {
+          console.error('Failed to fetch user role:', error);
+          token.role = 'USER';
+        }
       }
       return token;
     },
@@ -64,6 +78,7 @@ export const authOptions: NextAuthOptions = {
         session.user.email = token.email as string;
         session.user.name = token.name as string;
         session.user.image = token.picture as string;
+        (session.user as any).role = token.role as string;
       }
       return session;
     },
@@ -88,6 +103,13 @@ export const authOptions: NextAuthOptions = {
         }
       }
       return true;
+    },
+    async redirect({ url, baseUrl }) {
+      // 管理者ダッシュボードへの直接アクセスの場合のみ管理者サインインページにリダイレクト
+      if (url === `${baseUrl}/admin` || url === '/admin') {
+        return `${baseUrl}/admin/signin`;
+      }
+      return url.startsWith(baseUrl) ? url : baseUrl;
     },
   },
   session: {

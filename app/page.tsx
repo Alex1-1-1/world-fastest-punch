@@ -18,9 +18,6 @@ export default function HomePage() {
               <Link href="/app">
                 <Button variant="outline">アプリを試す</Button>
               </Link>
-              <Link href="/admin">
-                <Button variant="outline">管理者</Button>
-              </Link>
             </div>
           </div>
         </div>

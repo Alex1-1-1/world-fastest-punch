@@ -33,6 +33,7 @@ const WebApp: React.FC = () => {
   const { data: session, status } = useSession();
   const isLoading = status === 'loading';
   const isAuthenticated = !!session;
+  const isAdmin = (session?.user as any)?.role === 'ADMIN';
   const [activeTab, setActiveTab] = useState('gallery');
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [mySubmissions, setMySubmissions] = useState<Submission[]>([]);
@@ -272,6 +273,8 @@ const WebApp: React.FC = () => {
     fetchUserProfile();
     fetchNotifications();
   }, []);
+
+  // 管理者ログイン時の自動リダイレクトは削除（手動でアクセスするように変更）
 
   // プロフィール画像の変更を監視
   useEffect(() => {

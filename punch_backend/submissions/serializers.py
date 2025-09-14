@@ -91,11 +91,12 @@ class ReportSerializer(serializers.ModelSerializer):
 class UserProfileSerializer(serializers.ModelSerializer):
     """ユーザープロフィールシリアライザー"""
     profile_image = serializers.SerializerMethodField()
+    role = serializers.CharField(read_only=True)
     
     class Meta:
         model = UserProfile
-        fields = ['profile_image', 'bio', 'created_at', 'updated_at']
-        read_only_fields = ['created_at', 'updated_at']
+        fields = ['profile_image', 'bio', 'role', 'created_at', 'updated_at']
+        read_only_fields = ['role', 'created_at', 'updated_at']
     
     def get_profile_image(self, obj):
         if obj.profile_image:
