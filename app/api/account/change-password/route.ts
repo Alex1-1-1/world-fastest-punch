@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Django APIでパスワード変更
-    const response = await fetch('http://localhost:8000/api/account/change-password/', {
+    const response = await fetch(`${process.env.DJANGO_API_URL || 'https://world-fastest-punch-backend.onrender.com'}/api/account/change-password/`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

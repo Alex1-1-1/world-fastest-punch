@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 
-const DJANGO_API_URL = process.env.DJANGO_API_URL || 'http://localhost:8000'
+const DJANGO_API_URL = process.env.DJANGO_API_URL || 'https://world-fastest-punch-backend.onrender.com'
 
 // GET /api/admin/submissions - 管理者用投稿一覧
 export async function GET(request: NextRequest) {

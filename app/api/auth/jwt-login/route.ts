@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const BACKEND = process.env.BACKEND_URL || 'http://localhost:8000';
+const BACKEND = process.env.DJANGO_API_URL || 'https://world-fastest-punch-backend.onrender.com';
 
 export async function POST(req: NextRequest) {
   try {
