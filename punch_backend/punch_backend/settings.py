@@ -64,7 +64,7 @@ WSGI_APPLICATION = 'punch_backend.wsgi.application'
 
 # Database
 if os.environ.get('DATABASE_URL'):
-    # Railway PostgreSQL設定
+    # Render.com PostgreSQL設定
     import dj_database_url
     DATABASES = {
         'default': dj_database_url.parse(os.environ.get('DATABASE_URL'))
@@ -115,6 +115,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 CORS_ALLOWED_ORIGINS = [
     "https://世界最速パンチ.vercel.app",
     "https://alex1-1-1s-projects.vercel.app",
+    "https://world-fastest-punch-backend.onrender.com",
     "http://localhost:3000",
     "http://127.0.0.1:3000",
 ]
