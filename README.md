@@ -1,197 +1,118 @@
 # 世界一速いパンチアプリ
 
-パンチの速さを競い合うモバイルアプリケーションです。ユーザーがパンチの瞬間を撮影・投稿し、管理者による判定を通じて速度を競い合うことができます。
+パンチの速度を測定・投稿・ランキング表示するWebアプリケーションです。
 
-## 🏗️ アーキテクチャ
+## 技術スタック
 
-### フロントエンド
-- **Web**: Next.js 14 (App Router) + TypeScript + Tailwind CSS + shadcn/ui
-- **Mobile**: Expo (React Native) + TypeScript + React Native Paper
+- **フロントエンド**: Next.js 14, React, TypeScript, Tailwind CSS
+- **バックエンド**: Django 5.2, Django REST Framework
+- **データベース**: SQLite（開発環境）
+- **認証**: NextAuth.js（Google OAuth対応）
+- **画像処理**: サムネイル生成、ウォーターマーク付与
 
-### バックエンド
-- **API**: Next.js API Routes
-- **データベース**: PostgreSQL (Supabase)
-- **認証**: NextAuth.js (Google/Apple Sign-In)
-- **画像保存**: Supabase Storage
-- **ORM**: Prisma
+## 機能
 
-## 📱 機能
+### ユーザー機能
+- パンチ速度の測定・投稿
+- プロフィール設定（画像、ユーザー名、メール、自己紹介）
+- 投稿の説明文追加
+- ランキング表示（カテゴリー別・総合）
+- ギャラリー表示
+- 通知機能
 
-### モバイルアプリ（iOS）
-1. **ギャラリー画面**: 投稿されたパンチ画像の一覧表示
-2. **投稿画面**: 画像アップロードと投稿機能
-3. **詳細画面**: 透かし入り画像と判定結果の表示
-4. **ランキング画面**: 速度別カテゴリでのランキング表示
-5. **プロフィール画面**: ユーザー情報とログイン機能
+### 管理者機能
+- 投稿の承認・却下
+- 却下理由の設定
+- ユーザーへの通知送信
+- 統計情報の表示
 
-### Web管理画面
-1. **投稿管理**: 未判定投稿の一覧と判定機能
-2. **通報管理**: ユーザーからの通報の確認と対応
-3. **ランキング管理**: 週次ランキングの作成
-4. **統計ダッシュボード**: 投稿数や判定状況の可視化
+## セットアップ
 
-## 🚀 セットアップ
-
-### 1. 環境変数の設定
-`.env`ファイルを作成し、以下の環境変数を設定してください：
-
-```env
-# Database
-DATABASE_URL="postgresql://username:password@localhost:5432/world_fastest_punch"
-
-# NextAuth
-NEXTAUTH_URL="http://localhost:3000"
-NEXTAUTH_SECRET="your-secret-key-here"
-
-# Google OAuth
-GOOGLE_CLIENT_ID="your-google-client-id"
-GOOGLE_CLIENT_SECRET="your-google-client-secret"
-
-# Apple OAuth
-APPLE_ID="your-apple-id"
-APPLE_SECRET="your-apple-secret"
-
-# Supabase
-NEXT_PUBLIC_SUPABASE_URL="your-supabase-url"
-NEXT_PUBLIC_SUPABASE_ANON_KEY="your-supabase-anon-key"
-SUPABASE_SERVICE_ROLE_KEY="your-supabase-service-role-key"
-
-# Image Storage
-SUPABASE_BUCKET_NAME="punch-submissions"
+### 1. リポジトリのクローン
+```bash
+git clone https://github.com/YOUR_USERNAME/world-fastest-punch.git
+cd world-fastest-punch
 ```
 
-### 2. 依存関係のインストール
-
+### 2. フロントエンドのセットアップ
 ```bash
-# Webアプリケーション
+# 依存関係のインストール
 npm install
 
-# モバイルアプリケーション
-cd expo-app
-npm install
+# 環境変数の設定
+cp env.example .env.local
+# .env.localを編集して必要な環境変数を設定
+
+# 開発サーバーの起動
+npm run dev
 ```
 
-### 3. データベースのセットアップ
-
+### 3. バックエンドのセットアップ
 ```bash
-# Prismaクライアントの生成
-npx prisma generate
+# Django仮想環境の作成
+python -m venv django-backend
+source django-backend/bin/activate  # Windows: django-backend\Scripts\activate
+
+# 依存関係のインストール
+cd punch_backend
+pip install -r requirements.txt
 
 # データベースマイグレーション
-npx prisma db push
+python manage.py migrate
+
+# 開発サーバーの起動
+python manage.py runserver 8000
 ```
 
-### 4. アプリケーションの起動
+## アクセス
 
-```bash
-# Webアプリケーション（開発サーバー）
-npm run dev
+- **メインアプリ**: http://localhost:3000
+- **管理者ダッシュボード**: http://localhost:3000/admin
+- **API**: http://localhost:8000/api/
 
-# モバイルアプリケーション（Expo）
-cd expo-app
-npm run expo:start
+## プロジェクト構造
+
+```
+├── app/                    # Next.js App Router
+├── components/             # Reactコンポーネント
+│   ├── WebApp.tsx         # メインアプリケーション
+│   └── admin/             # 管理者ダッシュボード
+├── punch_backend/         # Djangoバックエンド
+│   ├── submissions/       # 投稿管理アプリ
+│   └── punch_backend/     # Django設定
+├── public/                # 静的ファイル
+└── lib/                   # ユーティリティ関数
 ```
 
-## 📊 データベーススキーマ
+## 特徴
 
-### 主要なテーブル
-- **User**: ユーザー情報
-- **Submission**: 投稿データ（画像URL、速度、コメント等）
-- **Report**: 通報データ
-- **Ranking**: ランキングデータ
-- **Account/Session**: NextAuth用の認証データ
+### モダンなランキングUI
+- 1-3位: 金・銀・銅の特別なデザイン
+- 4位以下: 統一されたオレンジ色のデザイン
+- アニメーション・グラデーション・装飾付き
 
-### 速度カテゴリ
-- **VERY_FAST**: 100+ km/h（とても速い）
-- **QUITE_FAST**: 80-99 km/h（まあまあ速い）
-- **MODERATE**: 60-79 km/h（普通）
-- **SLOW**: 40-59 km/h（遅い）
-- **VERY_SLOW**: 0-39 km/h（とても遅い）
+### 画像処理
+- 自動サムネイル生成
+- ウォーターマーク付与
+- プレースホルダー画像対応
 
-## 🔧 API エンドポイント
+### レスポンシブデザイン
+- モバイル・タブレット・デスクトップ対応
+- Tailwind CSSによる統一されたデザイン
 
-### 一般ユーザー用
-- `GET /api/submissions` - ギャラリー一覧取得
-- `GET /api/submissions/:id` - 投稿詳細取得
-- `POST /api/submissions` - 画像投稿
-- `GET /api/ranking` - ランキング取得
+## ライセンス
 
-### 管理者用
-- `GET /api/admin/submissions` - 管理者用投稿一覧
-- `POST /api/admin/submissions/:id/judge` - 投稿判定
-- `GET /api/admin/reports` - 通報一覧
-- `PATCH /api/admin/reports/:id` - 通報ステータス更新
+MIT License
 
-## 🛡️ セキュリティ機能
+## 貢献
 
-### 画像アップロード制限
-- ファイル形式: JPEG/PNG/TIFFのみ
-- ファイルサイズ: 2MB以下
-- 自動透かし追加
+プルリクエストやイシューの報告を歓迎します。
 
-### コンテンツ管理
-- 不適切なコンテンツの投稿禁止
-- ユーザー通報システム
-- 管理者による手動判定
+## 更新履歴
 
-### 認証・認可
-- Google/Apple Sign-In対応
-- 管理者権限の分離
-- JWT ベースのセッション管理
-
-## 📱 モバイルアプリのビルド
-
-### iOS アプリのビルド
-```bash
-cd expo-app
-npx expo build:ios
-```
-
-### 開発用の実行
-```bash
-cd expo-app
-npx expo start
-```
-
-## 🎨 UI/UX の特徴
-
-### モバイルアプリ
-- Material Design 3 (React Native Paper)
-- 直感的なナビゲーション
-- 高速な画像表示とキャッシュ
-- オフライン対応
-
-### Web管理画面
-- モダンなダッシュボードデザイン
-- レスポンシブ対応
-- リアルタイム更新
-- 直感的な操作インターフェース
-
-## 🔄 開発フロー
-
-1. **投稿**: ユーザーがパンチ画像をアップロード
-2. **保存**: Supabase Storageに画像を保存
-3. **判定待ち**: 管理者による判定を待つ
-4. **判定**: 管理者が速度とコメントを入力
-5. **公開**: 承認された投稿がギャラリーに表示
-6. **ランキング**: 速度別にランキングに追加
-
-## 📈 今後の拡張予定
-
-- 動画投稿機能
-- リアルタイム判定システム
-- ソーシャル機能（いいね、コメント）
-- プッシュ通知
-- 多言語対応
-- アナリティクス機能
-
-## 🤝 コントリビューション
-
-プロジェクトへの貢献を歓迎します。バグ報告や機能要望は、GitHubのIssuesでお知らせください。
-
-## 📄 ライセンス
-
-このプロジェクトはMITライセンスの下で公開されています。
-
-
-
+- v1.0.0: 初期リリース
+  - 基本的な投稿・ランキング機能
+  - 管理者ダッシュボード
+  - ユーザー認証・プロフィール機能
+  - モダンなランキングUI
+  - 説明文・通知機能
