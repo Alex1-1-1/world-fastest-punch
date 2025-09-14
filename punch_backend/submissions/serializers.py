@@ -51,6 +51,7 @@ class SubmissionSerializer(serializers.ModelSerializer):
 class JudgmentSerializer(serializers.ModelSerializer):
     """判定シリアライザー"""
     submission_id = serializers.IntegerField(source='submission.id', read_only=True)
+    judge_name = serializers.CharField(read_only=True)  # サーバー側で自動設定
     
     class Meta:
         model = Judgment
@@ -58,7 +59,7 @@ class JudgmentSerializer(serializers.ModelSerializer):
             'id', 'submission_id', 'judgment', 'speed_kmh', 'metaphor_comment',
             'detailed_comment', 'rejection_reason', 'judge_name', 'created_at'
         ]
-        read_only_fields = ['id', 'created_at']
+        read_only_fields = ['id', 'created_at', 'judge_name']
 
 
 class RankingSerializer(serializers.ModelSerializer):
@@ -134,9 +135,19 @@ class SubmissionCreateSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("画像サイズは2MB以下にしてください。")
         
         # 画像形式のバリデーション
-        allowed_formats = ['JPEG', 'PNG', 'TIFF']
-        if value.image.format not in allowed_formats:
-            raise serializers.ValidationError(f"対応形式は {', '.join(allowed_formats)} のみです。")
+        allowed_formats = ['JPEG', 'PNG', 'TIFF', 'JPG']
+        try:
+            # PIL Imageを使用して形式を取得
+            from PIL import Image
+            image = Image.open(value)
+            format_name = image.format
+            if format_name not in allowed_formats:
+                raise serializers.ValidationError(f"対応形式は {', '.join(allowed_formats)} のみです。")
+        except Exception as e:
+            # 形式が取得できない場合は、ファイル拡張子で判定
+            file_name = value.name.lower()
+            if not any(file_name.endswith(ext) for ext in ['.jpg', '.jpeg', '.png', '.tiff', '.tif']):
+                raise serializers.ValidationError(f"対応形式は {', '.join(allowed_formats)} のみです。")
         
         return value
 

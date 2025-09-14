@@ -1,34 +1,42 @@
 'use client';
 
-import React, { useEffect } from 'react';
-import { useSession } from 'next-auth/react';
+import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import AdminDashboard from '@/components/admin/AdminDashboard';
 
 export default function AdminDashboardPage() {
-  const { data: session, status } = useSession();
   const router = useRouter();
+  const [adminUser, setAdminUser] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (status === 'loading') return; // セッション読み込み中は何もしない
-
-    if (!session) {
-      // ログインしていない場合は管理者専用サインインページにリダイレクト
+    // ローカルストレージから管理者情報を取得
+    const storedAdminUser = localStorage.getItem('admin_user');
+    
+    if (storedAdminUser) {
+      try {
+        const adminData = JSON.parse(storedAdminUser);
+        // 管理者権限をチェック
+        if (adminData.is_staff || adminData.is_superuser) {
+          setAdminUser(adminData);
+        } else {
+          // 管理者権限がない場合はサインインページにリダイレクト
+          router.replace('/admin/signin');
+        }
+      } catch (error) {
+        console.error('Error parsing admin user data:', error);
+        router.replace('/admin/signin');
+      }
+    } else {
+      // 管理者情報がない場合はサインインページにリダイレクト
       router.replace('/admin/signin');
-      return;
     }
+    
+    setIsLoading(false);
+  }, [router]);
 
-    // 管理者権限をチェック
-    const userRole = (session.user as any)?.role;
-    if (userRole !== 'ADMIN') {
-      // 管理者権限がない場合はホームページにリダイレクト
-      router.replace('/');
-      return;
-    }
-  }, [session, status, router]);
-
-  // リダイレクト中はローディング表示
-  if (status === 'loading') {
+  // ローディング中はローディング表示
+  if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -39,10 +47,10 @@ export default function AdminDashboardPage() {
     );
   }
 
-  // セッションがない場合や管理者権限がない場合は何も表示しない（リダイレクト中）
-  if (!session || (session.user as any)?.role !== 'ADMIN') {
+  // 管理者情報がない場合は何も表示しない（リダイレクト中）
+  if (!adminUser) {
     return null;
   }
 
-  return <AdminDashboard session={session} />;
+  return <AdminDashboard adminUser={adminUser} />;
 }

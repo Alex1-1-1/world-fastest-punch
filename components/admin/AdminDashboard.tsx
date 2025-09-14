@@ -42,10 +42,17 @@ interface Report {
 }
 
 interface AdminDashboardProps {
-  session?: any;
+  adminUser?: {
+    id: number;
+    email: string;
+    username: string;
+    is_staff: boolean;
+    is_superuser: boolean;
+  };
 }
 
-const AdminDashboard: React.FC<AdminDashboardProps> = ({ session }) => {
+const AdminDashboard: React.FC<AdminDashboardProps> = ({ adminUser }) => {
+  const [jwtToken, setJwtToken] = useState<string | null>(null);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [reports, setReports] = useState<Report[]>([]);
   const [loading, setLoading] = useState(true);
@@ -57,10 +64,49 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ session }) => {
     rejectionReason: '',
   });
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
+  const [formErrors, setFormErrors] = useState<Record<string, string[]>>({});
 
   useEffect(() => {
-    fetchData();
-  }, []);
+    // ローカルストレージからJWTトークンを確認
+    const storedToken = localStorage.getItem('admin_jwt_token');
+    if (storedToken) {
+      setJwtToken(storedToken);
+      console.log('ローカルストレージからJWTトークンを読み込み:', storedToken);
+    }
+    
+    // JWTトークンを取得
+    const getJwtToken = async () => {
+      try {
+        const response = await fetch('http://localhost:8000/api/token/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            username: adminUser?.username || 'world.fastest.punch.kanri',
+            password: 'world.kanri'
+          }),
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          setJwtToken(data.access);
+          // ローカルストレージにも保存
+          localStorage.setItem('admin_jwt_token', data.access);
+          console.log('JWTトークン取得成功:', data.access);
+        } else {
+          console.error('JWTトークン取得失敗:', response.status);
+        }
+      } catch (error) {
+        console.error('JWTトークン取得エラー:', error);
+      }
+    };
+    
+    if (adminUser) {
+      getJwtToken();
+      fetchData();
+    }
+  }, [adminUser]);
 
   const fetchData = async () => {
     try {
@@ -84,7 +130,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ session }) => {
             (item.watermarked_image.startsWith('http') ? item.watermarked_image : `http://localhost:8000${item.watermarked_image}`) :
             (item.image.startsWith('http') ? item.image : `http://localhost:8000${item.image}`),
           speed: item.judgment?.speed_kmh || null,
-          comment: item.judgment?.metaphor_comment || null,
+          comment: (() => {
+            const originalComment = item.judgment?.metaphor_comment;
+            console.log('管理者デバッグ - 元のコメント:', originalComment, 'タイプ:', typeof originalComment);
+            const cleanedComment = originalComment?.replace(/^"+|"+$/g, '');
+            console.log('管理者デバッグ - クリーン後のコメント:', cleanedComment);
+            return cleanedComment || null;
+          })(),
           description: item.description || '',
           status: item.is_judged ? 'APPROVED' : 'PENDING',
           createdAt: item.created_at,
@@ -128,26 +180,76 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ session }) => {
       console.log('=== 管理者判定開始 ===');
       console.log('Submission ID:', submissionId);
       console.log('判定フォーム:', judgmentForm);
-      console.log('セッション情報:', session);
+      console.log('管理者情報:', adminUser);
+      console.log('JWTトークン:', jwtToken ? '取得済み' : '未取得');
       
+      // フォームエラーをクリア
+      setFormErrors({});
+      
+      // バリデーション
       if (judgmentForm.status === 'REJECTED' && !judgmentForm.rejectionReason) {
-        alert('却下理由を選択してください');
+        setFormErrors({ rejectionReason: ['却下理由を選択してください'] });
+        return;
+      }
+
+      // metaphor_commentの必須チェック
+      if (judgmentForm.status === 'APPROVED' && !judgmentForm.comment.trim()) {
+        setFormErrors({ comment: ['例えコメントは必須です'] });
         return;
       }
 
       const requestData = {
-        speed: judgmentForm.status === 'APPROVED' ? parseFloat(judgmentForm.speed) : 0,
-        comment: judgmentForm.status === 'APPROVED' ? judgmentForm.comment : judgmentForm.rejectionReason,
-        status: judgmentForm.status,
+        speed_kmh: judgmentForm.status === 'APPROVED' ? parseFloat(judgmentForm.speed) : 0,
+        metaphor_comment: judgmentForm.status === 'APPROVED' ? judgmentForm.comment : judgmentForm.rejectionReason,
+        judgment: judgmentForm.status,
+        // judge_nameはサーバー側で自動設定されるため送信しない
       };
       
       console.log('送信データ:', requestData);
-      console.log('API URL:', `/api/admin/submissions/${submissionId}/judge`);
+      console.log('API URL:', `/api/admin/rejudge/${submissionId}`);
 
-      const response = await fetch(`/api/admin/submissions/${submissionId}/judge`, {
+      if (!jwtToken) {
+        console.log('JWTトークンが取得できていません。再取得を試行します。');
+        
+        // JWTトークンを再取得
+        try {
+          const tokenResponse = await fetch('http://localhost:8000/api/token/', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              username: adminUser?.username || 'world.fastest.punch.kanri',
+              password: 'world.kanri'
+            }),
+          });
+          
+          if (tokenResponse.ok) {
+            const tokenData = await tokenResponse.json();
+            setJwtToken(tokenData.access);
+            // ローカルストレージにも保存
+            localStorage.setItem('admin_jwt_token', tokenData.access);
+            console.log('JWTトークン再取得成功:', tokenData.access);
+          } else {
+            console.error('JWTトークン再取得失敗:', tokenResponse.status);
+            alert('認証トークンが取得できません。管理者アカウントを確認してください。');
+            return;
+          }
+        } catch (error) {
+          console.error('JWTトークン再取得エラー:', error);
+          alert('認証トークンが取得できません。ネットワークエラーが発生しました。');
+          return;
+        }
+      }
+
+      // 最新のJWTトークンを取得
+      const currentToken = jwtToken || localStorage.getItem('admin_jwt_token');
+      
+      const response = await fetch(`/api/admin/rejudge/${submissionId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${currentToken}`,
         },
         body: JSON.stringify(requestData),
       });
@@ -161,6 +263,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ session }) => {
         await fetchData();
         setSelectedSubmission(null);
         setJudgmentForm({ speed: '5', comment: '', status: 'APPROVED', rejectionReason: '' });
+        setFormErrors({});
         alert(judgmentForm.status === 'APPROVED' ? '承認しました' : '却下しました');
       } else {
         console.log('エラーレスポンス受信');
@@ -168,7 +271,14 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ session }) => {
         console.error('判定保存エラー:', errorData);
         console.error('エラーレスポンス:', response.status, response.statusText);
         
-        // エラーメッセージをより分かりやすく表示
+        // バリデーションエラーをフォームに表示
+        if (response.status === 400 && typeof errorData === 'object') {
+          setFormErrors(errorData);
+          console.log('フォームエラーを設定:', errorData);
+          return;
+        }
+        
+        // その他のエラーメッセージを表示
         let errorMessage = '判定の保存に失敗しました';
         if (errorData.detail) {
           errorMessage = `エラー: ${errorData.detail}`;
@@ -206,7 +316,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ session }) => {
 
   const handleLogout = async () => {
     try {
-      await signOut({ callbackUrl: '/' });
+      // ローカルストレージから管理者情報を削除
+      localStorage.removeItem('admin_user');
+      
+      // 一般ユーザーサイトにリダイレクト
+      window.location.href = '/';
     } catch (error) {
       console.error('ログアウトエラー:', error);
     }
@@ -259,6 +373,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ session }) => {
             <div>
               <h1 className="text-3xl font-bold text-gray-900">管理者ダッシュボード</h1>
               <p className="text-gray-600 mt-2">投稿の判定と管理を行う管理者専用画面</p>
+              {adminUser && (
+                <p className="text-sm text-gray-500 mt-1">
+                  ログイン中: {adminUser.username} ({adminUser.email})
+                </p>
+              )}
               <div className="mt-2 flex items-center space-x-2">
                 <Badge variant="outline" className="text-red-600 border-red-600">
                   <AlertCircle className="h-3 w-3 mr-1" />
@@ -533,25 +652,29 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ session }) => {
                 
                 {judgmentForm.status === 'APPROVED' ? (
                   <div>
-                    <Label htmlFor="comment">コメント</Label>
+                    <Label htmlFor="comment">例えコメント <span className="text-red-500">*</span></Label>
                     <Textarea
                       id="comment"
                       value={judgmentForm.comment}
                       onChange={(e) => setJudgmentForm(prev => ({ ...prev, comment: e.target.value }))}
                       placeholder="例: 新幹線並みの速さ！"
                       rows={3}
+                      className={formErrors.comment ? 'border-red-500' : ''}
                     />
+                    {formErrors.comment && (
+                      <p className="text-red-500 text-sm mt-1">{formErrors.comment[0]}</p>
+                    )}
                   </div>
                 ) : (
                   <div>
-                    <Label htmlFor="rejectionReason">却下理由</Label>
+                    <Label htmlFor="rejectionReason">却下理由 <span className="text-red-500">*</span></Label>
                     <Select
                       value={judgmentForm.rejectionReason}
                       onValueChange={(value) => 
                         setJudgmentForm(prev => ({ ...prev, rejectionReason: value }))
                       }
                     >
-                      <SelectTrigger>
+                      <SelectTrigger className={formErrors.rejectionReason ? 'border-red-500' : ''}>
                         <SelectValue placeholder="却下理由を選択してください" />
                       </SelectTrigger>
                       <SelectContent>
@@ -562,6 +685,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ session }) => {
                         <SelectItem value="その他">その他</SelectItem>
                       </SelectContent>
                     </Select>
+                    {formErrors.rejectionReason && (
+                      <p className="text-red-500 text-sm mt-1">{formErrors.rejectionReason[0]}</p>
+                    )}
                   </div>
                 )}
               </div>

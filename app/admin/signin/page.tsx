@@ -30,33 +30,44 @@ export default function AdminSignInPage() {
     e.preventDefault();
     setIsLoading(true);
     try {
-      const result = await signIn('credentials', {
-        email: formData.email,
-        password: formData.password,
-        redirect: false
+      // 管理者専用アカウントでログイン
+      const response = await fetch('http://localhost:8000/api/auth/login/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password,
+        }),
       });
-      
-      if (result?.error) {
-        alert('ログインに失敗しました。\n\n管理者権限のあるアカウントでログインしてください。\n不正なアクセス試行は記録されています。');
-      } else {
-        // 管理者権限をチェック
-        const response = await fetch('http://localhost:8000/api/profile/');
-        if (response.ok) {
-          const profile = await response.json();
-          if (profile.role === 'ADMIN') {
-            // 管理者ダッシュボードに同じタブ内で遷移
-            router.push('/admin/dashboard');
-          } else {
-            alert('管理者権限がありません。\n\n管理者アカウントでログインしてください。\n不正なアクセス試行は記録されています。');
-            await signOut({ callbackUrl: '/admin/signin' });
-          }
+
+      if (response.ok) {
+        const userData = await response.json();
+        
+        // 管理者権限をチェック（is_staffまたはis_superuser）
+        if (userData.is_staff || userData.is_superuser) {
+          // 管理者情報をローカルストレージに保存
+          localStorage.setItem('admin_user', JSON.stringify({
+            id: userData.id,
+            email: userData.email,
+            username: userData.username,
+            is_staff: userData.is_staff,
+            is_superuser: userData.is_superuser
+          }));
+          
+          // 管理者ダッシュボードに直接遷移
+          window.location.href = '/admin/dashboard';
         } else {
-          alert('プロフィール情報の取得に失敗しました。');
+          alert('管理者権限がありません。\n\n管理者専用アカウントでログインしてください。\n不正なアクセス試行は記録されています。');
         }
+      } else {
+        const errorData = await response.json();
+        alert(`ログインに失敗しました。\n\n${errorData.error || '管理者権限のあるアカウントでログインしてください。'}\n不正なアクセス試行は記録されています。`);
       }
     } catch (error) {
       console.error('Admin authentication error:', error);
-      alert('ログインに失敗しました。');
+      alert('ログインに失敗しました。\n\nネットワークエラーが発生しました。');
     } finally {
       setIsLoading(false);
     }
@@ -188,18 +199,28 @@ export default function AdminSignInPage() {
               </div>
             </div>
 
-            {/* 開発環境用リンク（本番環境では非表示） */}
+            {/* 開発環境用認証情報（本番環境では非表示） */}
             {process.env.NODE_ENV === 'development' && (
-              <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
+              <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
                 <div className="text-center">
-                  <p className="text-xs text-gray-500 mb-2">開発環境用</p>
-                  <Link 
-                    href="/admin/signin/dev-credentials.md"
-                    target="_blank"
-                    className="text-xs text-blue-600 hover:text-blue-800 underline"
-                  >
-                    管理者アカウント情報を確認
-                  </Link>
+                  <p className="text-xs text-gray-500 mb-3 font-semibold">開発環境用認証情報</p>
+                  <div className="bg-white border border-gray-300 rounded-lg p-3 text-left">
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-center">
+                        <span className="text-xs font-medium text-gray-600">メールアドレス:</span>
+                        <span className="text-xs font-mono text-gray-800">world.fastest.punch.kanri@gmail.com</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-xs font-medium text-gray-600">パスワード:</span>
+                        <span className="text-xs font-mono text-gray-800">world.kanri</span>
+                      </div>
+                    </div>
+                    <div className="mt-2 pt-2 border-t border-gray-200">
+                      <p className="text-xs text-red-600 font-medium">
+                        ⚠️ この情報は開発環境でのみ使用してください
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
             )}

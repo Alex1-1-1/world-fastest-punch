@@ -2,6 +2,7 @@ from rest_framework import generics, status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
+from rest_framework.exceptions import ValidationError
 from rest_framework.parsers import MultiPartParser, FormParser
 from django.shortcuts import get_object_or_404
 from django.db.models import Q
@@ -94,6 +95,7 @@ def sync_user(request):
 
 
 @api_view(['POST'])
+@permission_classes([AllowAny])
 def login_user(request):
     """メール/パスワードでログイン"""
     try:
@@ -127,6 +129,8 @@ def login_user(request):
             'email': user.email,
             'username': user.username,
             'first_name': user.first_name,
+            'is_staff': user.is_staff,
+            'is_superuser': user.is_superuser,
         }, status=status.HTTP_200_OK)
 
     except Exception as e:
@@ -173,8 +177,9 @@ def register_user(request):
 
 
 @api_view(['POST'])
+@permission_classes([AllowAny])
 def reset_password(request):
-    """パスワードリセット（開発用簡易版）"""
+    """パスワードリセット（メール送信対応版）"""
     try:
         data = request.data
         email = data.get('email')
@@ -188,19 +193,73 @@ def reset_password(request):
         except User.DoesNotExist:
             return Response({'error': 'User with this email does not exist'}, status=status.HTTP_404_NOT_FOUND)
 
-        # 新しいパスワードを生成（開発用）
+        # 新しいパスワードを生成
         new_password = ''.join(secrets.choice(string.ascii_letters + string.digits) for _ in range(8))
         user.set_password(new_password)
         user.save()
 
-        # 開発環境ではコンソールに出力（本番ではメール送信）
-        print(f"Password reset for {email}: {new_password}")
-        
-        return Response({
-            'message': 'Password reset successfully',
-            'new_password': new_password,  # 開発用：本番では削除
-            'note': 'This is a development environment. In production, this would be sent via email.'
-        }, status=status.HTTP_200_OK)
+        # Resendを使用してメール送信を試行
+        try:
+            import resend
+            import requests
+            
+            # Resend APIキーを設定
+            resend.api_key = settings.RESEND_API_KEY
+            
+            subject = 'パスワードリセット完了 - 世界一速いパンチ'
+            html_content = f'''
+            <html>
+            <body>
+                <h2>パスワードリセット完了</h2>
+                <p>こんにちは！</p>
+                <p>パスワードリセットが完了しました。</p>
+                <div style="background-color: #f0f0f0; padding: 15px; border-radius: 5px; margin: 20px 0;">
+                    <strong>新しいパスワード: {new_password}</strong>
+                </div>
+                <p>このパスワードでログインしてください。</p>
+                <p>ログイン後は、プロフィール設定からパスワードを変更することをお勧めします。</p>
+                <hr>
+                <p>世界一速いパンチ</p>
+            </body>
+            </html>
+            '''
+            
+            # ResendのAPIを直接呼び出し
+            url = "https://api.resend.com/emails"
+            headers = {
+                "Authorization": f"Bearer {settings.RESEND_API_KEY}",
+                "Content-Type": "application/json"
+            }
+            data = {
+                "from": "世界一速いパンチ <onboarding@resend.dev>",
+                "to": [email],
+                "subject": subject,
+                "html": html_content
+            }
+            
+            response = requests.post(url, headers=headers, json=data)
+            print(f"Resend API response status: {response.status_code}")
+            print(f"Resend API response: {response.text}")
+            
+            if response.status_code == 200:
+                print(f"Password reset email sent to {email} via Resend")
+                return Response({
+                    'message': 'Password reset successfully. Please check your email.',
+                    'note': '新しいパスワードがメールアドレスに送信されました。'
+                }, status=status.HTTP_200_OK)
+            else:
+                raise Exception(f"Resend API error: {response.status_code} - {response.text}")
+            
+        except Exception as email_error:
+            print(f"Resend email sending failed: {email_error}")
+            print(f"Error type: {type(email_error)}")
+            print(f"Error details: {str(email_error)}")
+            # メール送信に失敗した場合はフォールバック
+            return Response({
+                'message': 'Password reset successfully',
+                'new_password': new_password,  # メール送信失敗時のフォールバック
+                'note': f'メール送信に失敗しました。新しいパスワード: {new_password}'
+            }, status=status.HTTP_200_OK)
 
     except Exception as e:
         return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -210,6 +269,7 @@ class SubmissionListCreateView(generics.ListCreateAPIView):
     """投稿一覧・作成ビュー"""
     queryset = Submission.objects.all()
     parser_classes = [MultiPartParser, FormParser]
+    permission_classes = [AllowAny]  # 認証不要で投稿一覧を取得可能
     
     def get_serializer_class(self):
         if self.request.method == 'POST':
@@ -354,6 +414,7 @@ class SubmissionDetailView(generics.RetrieveAPIView):
     """投稿詳細ビュー"""
     queryset = Submission.objects.all()
     serializer_class = SubmissionSerializer
+    permission_classes = [AllowAny]  # 認証不要
     
     def get_serializer_context(self):
         context = super().get_serializer_context()
@@ -365,42 +426,51 @@ class JudgmentCreateView(generics.CreateAPIView):
     """判定作成ビュー（管理者のみ）"""
     queryset = Judgment.objects.all()
     serializer_class = JudgmentSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAdminUser]
     
     def perform_create(self, serializer):
-        print(f"DEBUG: 判定エンドポイント開始")
-        print(f"DEBUG: リクエストユーザー: {self.request.user}")
-        print(f"DEBUG: 認証状態: {self.request.user.is_authenticated}")
-        print(f"DEBUG: セッションキー: {self.request.session.session_key}")
-        print(f"DEBUG: セッションデータ: {dict(self.request.session)}")
+        print(f"DEBUG: 判定エンドポイント開始 - ユーザー: {self.request.user}")
         
-        # 管理者権限チェック
-        if not self.request.user.is_authenticated:
-            print("DEBUG: 認証エラー - ユーザーが認証されていません")
-            raise PermissionError('認証が必要です')
-        
-        try:
-            profile = self.request.user.profile
-            print(f"DEBUG: プロフィール取得成功 - ロール: {profile.role}")
-            if profile.role != 'ADMIN':
-                print("DEBUG: 権限エラー - 管理者権限がありません")
-                raise PermissionError('管理者権限が必要です')
-        except UserProfile.DoesNotExist:
-            print("DEBUG: プロフィールエラー - プロフィールが見つかりません")
-            raise PermissionError('プロフィールが見つかりません')
+        # JWT認証により既に認証済み、IsAdminUserにより管理者権限も確認済み
         
         # 判定処理
         submission_id = self.kwargs['submission_id']
         print(f"DEBUG: 判定処理開始 - 投稿ID: {submission_id}")
         print(f"DEBUG: リクエストデータ: {self.request.data}")
         
+        # セキュリティ強化：judge_nameをサーバー側で自動設定
+        data = self.request.data.copy()
+        if not data.get("judge_name"):
+            user = self.request.user
+            data["judge_name"] = getattr(user, "get_full_name", lambda: None)() or user.username or user.email
+            print(f"DEBUG: judge_nameを自動設定: {data['judge_name']}")
+        
+        # metaphor_commentの必須チェック
+        if not data.get("metaphor_comment"):
+            print("DEBUG: metaphor_commentが必須です")
+            from rest_framework import status
+            from rest_framework.response import Response
+            raise ValidationError({"metaphor_comment": ["この項目は必須です。"]})
+        
         try:
             submission = get_object_or_404(Submission, id=submission_id)
             print(f"DEBUG: 投稿取得成功 - {submission.id}")
             
-            # 判定データを保存
-            judgment = serializer.save(submission=submission)
-            print(f"DEBUG: 判定データ保存成功 - {judgment.id}")
+            # 既存の判定があるかチェック
+            existing_judgment = Judgment.objects.filter(submission=submission).first()
+            if existing_judgment:
+                print(f"DEBUG: 既存の判定を更新 - 判定ID: {existing_judgment.id}")
+                # 既存の判定を更新
+                for key, value in data.items():
+                    setattr(existing_judgment, key, value)
+                existing_judgment.save()
+                judgment = existing_judgment
+                print(f"DEBUG: 既存判定更新成功 - {judgment.id}")
+            else:
+                print(f"DEBUG: 新しい判定を作成")
+                # 新しい判定を作成
+                judgment = serializer.save(submission=submission, **data)
+                print(f"DEBUG: 新規判定データ保存成功 - {judgment.id}")
             
             # 判定結果に応じて処理
             if judgment.judgment == 'REJECTED':
@@ -456,11 +526,13 @@ class RankingListView(generics.ListAPIView):
     """ランキング一覧ビュー"""
     queryset = Ranking.objects.all()
     serializer_class = RankingSerializer
+    permission_classes = [AllowAny]  # 認証不要
 
 
 class NotificationListView(generics.ListAPIView):
     """通知一覧ビュー"""
     serializer_class = NotificationSerializer
+    permission_classes = [AllowAny]  # 認証不要
     
     def get_queryset(self):
         # 認証されたユーザーまたはworld.fastest.punch@gmail.comのユーザーの通知を取得
@@ -479,6 +551,7 @@ class NotificationListView(generics.ListAPIView):
 class NotificationMarkReadView(generics.UpdateAPIView):
     """通知既読マークビュー"""
     serializer_class = NotificationSerializer
+    permission_classes = [AllowAny]  # 認証不要に設定
     
     def get_queryset(self):
         # 認証されたユーザーまたはworld.fastest.punch@gmail.comのユーザーの通知を取得
@@ -524,6 +597,7 @@ class ReportCreateView(generics.CreateAPIView):
 
 
 @api_view(['GET'])
+@permission_classes([AllowAny])
 def admin_submissions(request):
     """管理者用投稿一覧"""
     submissions = Submission.objects.all().order_by('-created_at')
@@ -532,6 +606,7 @@ def admin_submissions(request):
 
 
 @api_view(['GET'])
+@permission_classes([AllowAny])
 def admin_reports(request):
     """管理者用通報一覧"""
     reports = Report.objects.filter(is_resolved=False).order_by('-created_at')
@@ -540,6 +615,7 @@ def admin_reports(request):
 
 
 @api_view(['GET', 'PUT'])
+@permission_classes([AllowAny])
 def user_profile(request):
     """ユーザープロフィール取得・更新"""
     try:

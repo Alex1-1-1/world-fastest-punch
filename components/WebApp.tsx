@@ -274,6 +274,21 @@ const WebApp: React.FC = () => {
     fetchNotifications();
   }, []);
 
+  // セッション状態の変更を監視してプロフィールデータをクリア
+  useEffect(() => {
+    if (!isAuthenticated) {
+      // ログアウト時はプロフィールデータをクリア
+      setMySubmissions([]);
+      setUserSettings({
+        username: 'パンチマスター',
+        email: 'punch@example.com',
+        profileImage: null,
+        bio: 'パンチの速さを競い合いましょう！'
+      });
+      setShowSettings(false);
+    }
+  }, [isAuthenticated]);
+
   // 管理者ログイン時の自動リダイレクトは削除（手動でアクセスするように変更）
 
   // プロフィール画像の変更を監視
@@ -298,13 +313,20 @@ const WebApp: React.FC = () => {
             thumbnailUrl: item.thumbnail || item.image, // 既に絶対URLで返されている
             watermarkedUrl: item.watermarked_image,
             speed: item.judgment?.speed_kmh || null,
-            comment: item.judgment?.metaphor_comment || null,
+            comment: (() => {
+              const originalComment = item.judgment?.metaphor_comment;
+              console.log('デバッグ - 元のコメント:', originalComment, 'タイプ:', typeof originalComment);
+              const cleanedComment = originalComment?.replace(/^"+|"+$/g, '');
+              console.log('デバッグ - クリーン後のコメント:', cleanedComment);
+              return cleanedComment || null;
+            })(),
             description: item.description || '',
             status: 'APPROVED',
             createdAt: item.created_at,
             user: { name: item.user_username || 'テストユーザー' }
           }));
         console.log('変換後のsubmissions:', submissions);
+        console.log('デバッグ - 元のAPIデータ:', data.results);
         setSubmissions(submissions);
       } else {
         // APIが失敗した場合はモックデータを使用
@@ -354,7 +376,13 @@ const WebApp: React.FC = () => {
             thumbnailUrl: item.thumbnail || item.image,
             watermarkedUrl: item.watermarked_image,
             speed: item.judgment?.speed_kmh || null,
-            comment: item.judgment?.metaphor_comment || null,
+            comment: (() => {
+              const originalComment = item.judgment?.metaphor_comment;
+              console.log('デバッグ - 元のコメント:', originalComment, 'タイプ:', typeof originalComment);
+              const cleanedComment = originalComment?.replace(/^"+|"+$/g, '');
+              console.log('デバッグ - クリーン後のコメント:', cleanedComment);
+              return cleanedComment || null;
+            })(),
             status: item.is_judged ? 'APPROVED' : 'PENDING',
             createdAt: item.created_at,
             user: { name: item.user_username || 'テストユーザー' },
@@ -393,13 +421,56 @@ const WebApp: React.FC = () => {
 
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    console.log('画像選択イベント発生:', event);
     const file = event.target.files?.[0];
+    console.log('選択されたファイル:', file);
+    
     if (file) {
+      console.log('ファイル詳細:', {
+        name: file.name,
+        size: file.size,
+        type: file.type,
+        lastModified: file.lastModified
+      });
+      
+      // ファイルサイズチェック（2MB以下）
+      if (file.size > 2 * 1024 * 1024) {
+        alert('画像ファイルは2MB以下にしてください。');
+        return;
+      }
+      
+      // ファイル形式チェック
+      if (!file.type.startsWith('image/')) {
+        alert('画像ファイルを選択してください。');
+        return;
+      }
+      
       const reader = new FileReader();
       reader.onload = (e) => {
+        console.log('画像読み込み完了');
         setSelectedImage(e.target?.result as string);
       };
       reader.readAsDataURL(file);
+    } else {
+      console.log('ファイルが選択されませんでした');
+    }
+  };
+
+  // 写真ライブラリから選択（Web環境用）
+  const handlePhotoLibrarySelect = () => {
+    console.log('写真ライブラリ選択開始');
+    const input = document.getElementById('image-upload') as HTMLInputElement;
+    if (input) {
+      input.click();
+    }
+  };
+
+  // カメラで撮影（Web環境用）
+  const handleCameraCapture = () => {
+    console.log('カメラ撮影開始');
+    const input = document.getElementById('camera-capture') as HTMLInputElement;
+    if (input) {
+      input.click();
     }
   };
 
@@ -686,30 +757,99 @@ const WebApp: React.FC = () => {
                   alt="選択された画像"
                   className="w-48 h-48 object-cover rounded-lg mx-auto"
                 />
-                <Button
-                  variant="outline"
-                  onClick={() => setSelectedImage(null)}
-                  className="mt-2 w-full"
-                >
-                  変更
-                </Button>
+                <div className="flex gap-2 mt-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => setSelectedImage(null)}
+                    className="flex-1"
+                  >
+                    変更
+                  </Button>
+                </div>
               </div>
             ) : (
               <div className="mt-4">
+                {/* Web環境用の隠しinput要素 */}
                 <input
                   type="file"
-                  accept="image/*"
+                  accept="image/*,.heic,.heif"
                   onChange={handleImageUpload}
                   className="hidden"
                   id="image-upload"
+                  multiple={false}
                 />
-                <Label
-                  htmlFor="image-upload"
-                  className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100"
-                >
-                  <Camera className="w-8 h-8 text-gray-400 mb-2" />
-                  <p className="text-sm text-gray-500">クリックして画像を選択</p>
-                </Label>
+                <input
+                  type="file"
+                  accept="image/*,.heic,.heif"
+                  capture="environment"
+                  onChange={handleImageUpload}
+                  className="hidden"
+                  id="camera-capture"
+                  multiple={false}
+                />
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {/* ファイルから選択 */}
+                  <div>
+                    <input
+                      type="file"
+                      accept="image/*,.heic,.heif"
+                      onChange={handleImageUpload}
+                      className="hidden"
+                      id="file-upload"
+                      multiple={false}
+                    />
+                    <Label
+                      htmlFor="file-upload"
+                      className="flex flex-col items-center justify-center h-24 sm:h-28 border-2 border-purple-300 border-dashed rounded-xl cursor-pointer bg-purple-50 hover:bg-purple-100 active:bg-purple-200 transition-colors group touch-manipulation"
+                      onClick={() => console.log('ファイル選択ボタンがクリックされました')}
+                    >
+                      <Upload className="w-8 h-8 text-purple-500 mb-2 group-hover:text-purple-600" />
+                      <p className="text-sm text-purple-600 text-center font-medium">ファイルから選択</p>
+                      <p className="text-xs text-purple-500 text-center mt-1">フォルダから選択</p>
+                    </Label>
+                  </div>
+                  
+                  {/* 写真ライブラリから選択 */}
+                  <div>
+                    <button
+                      type="button"
+                      onClick={handlePhotoLibrarySelect}
+                      className="w-full flex flex-col items-center justify-center h-24 sm:h-28 border-2 border-blue-300 border-dashed rounded-xl cursor-pointer bg-blue-50 hover:bg-blue-100 active:bg-blue-200 transition-colors group touch-manipulation"
+                    >
+                      <ImageIcon className="w-8 h-8 text-blue-500 mb-2 group-hover:text-blue-600" />
+                      <p className="text-sm text-blue-600 text-center font-medium">写真ライブラリ</p>
+                      <p className="text-xs text-blue-500 text-center mt-1">既存の写真から選択</p>
+                    </button>
+                  </div>
+                  
+                  {/* カメラで撮影 */}
+                  <div>
+                    <button
+                      type="button"
+                      onClick={handleCameraCapture}
+                      className="w-full flex flex-col items-center justify-center h-24 sm:h-28 border-2 border-green-300 border-dashed rounded-xl cursor-pointer bg-green-50 hover:bg-green-100 active:bg-green-200 transition-colors group touch-manipulation"
+                    >
+                      <Camera className="w-8 h-8 text-green-500 mb-2 group-hover:text-green-600" />
+                      <p className="text-sm text-green-600 text-center font-medium">カメラで撮影</p>
+                      <p className="text-xs text-green-500 text-center mt-1">今すぐ撮影</p>
+                    </button>
+                  </div>
+                </div>
+                
+                <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                  <p className="text-sm text-blue-800 text-center font-medium mb-2">
+                    📱 写真の選択方法
+                  </p>
+                  <div className="text-xs text-blue-700 space-y-1">
+                    <p>• <strong>ファイルから選択</strong>：フォルダから画像ファイルを選択</p>
+                    <p>• <strong>写真ライブラリ</strong>：ファイル選択ダイアログから写真を選択</p>
+                    <p>• <strong>カメラで撮影</strong>：カメラ対応ブラウザで撮影</p>
+                    <p>• 対応形式：JPEG、PNG、HEIC、HEIF</p>
+                    <p>• ファイルサイズ：2MB以下</p>
+                    <p>• すべての選択方法で同じファイル選択ダイアログが開きます</p>
+                  </div>
+                </div>
               </div>
             )}
           </div>
@@ -1082,8 +1222,35 @@ const WebApp: React.FC = () => {
 
   const renderProfile = () => {
     console.log('=== renderProfile 開始 ===');
+    console.log('isAuthenticated:', isAuthenticated);
     console.log('mySubmissions:', mySubmissions);
     console.log('mySubmissions.length:', mySubmissions.length);
+    
+    // ログインしていない場合はログインボタンを表示
+    if (!isAuthenticated) {
+      return (
+        <div className="max-w-4xl mx-auto">
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle className="text-center">プロフィール</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="text-center py-12">
+                <div className="w-24 h-24 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Users className="w-12 h-12 text-gray-400" />
+                </div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">ログインが必要です</h3>
+                <p className="text-gray-600 mb-6">プロフィールを表示するにはログインしてください</p>
+                <Button onClick={() => signIn()} className="bg-orange-500 hover:bg-orange-600">
+                  <LogIn className="w-4 h-4 mr-2" />
+                  ログイン
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      );
+    }
     
     const approvedCount = mySubmissions.filter(s => s.status === 'APPROVED').length;
     const pendingCount = mySubmissions.filter(s => s.status === 'PENDING').length;
@@ -1380,22 +1547,57 @@ const WebApp: React.FC = () => {
             fetchMySubmissions();
           }
         }} className="w-full">
-          <TabsList className="grid w-full grid-cols-5 mb-6">
-            <TabsTrigger value="gallery">ギャラリー</TabsTrigger>
-            <TabsTrigger value="submit">投稿</TabsTrigger>
-            <TabsTrigger value="ranking">ランキング</TabsTrigger>
-            <TabsTrigger value="profile">プロフィール</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-5 mb-6 bg-gradient-to-r from-gray-100 via-gray-50 to-gray-100 p-1 rounded-xl shadow-lg border border-gray-200">
+            <TabsTrigger 
+              value="gallery"
+              className="relative data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-blue-600 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-blue-200 data-[state=active]:scale-105 transition-all duration-300 ease-in-out hover:scale-105 hover:shadow-md rounded-lg font-semibold"
+            >
+              <div className="flex items-center space-x-2">
+                <ImageIcon className="w-4 h-4" />
+                <span>ギャラリー</span>
+              </div>
+            </TabsTrigger>
+            <TabsTrigger 
+              value="submit"
+              className="relative data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-500 data-[state=active]:to-orange-600 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-orange-200 data-[state=active]:scale-105 transition-all duration-300 ease-in-out hover:scale-105 hover:shadow-md rounded-lg font-semibold"
+            >
+              <div className="flex items-center space-x-2">
+                <Camera className="w-4 h-4" />
+                <span>投稿</span>
+              </div>
+            </TabsTrigger>
+            <TabsTrigger 
+              value="ranking"
+              className="relative data-[state=active]:bg-gradient-to-r data-[state=active]:from-yellow-500 data-[state=active]:to-yellow-600 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-yellow-200 data-[state=active]:scale-105 transition-all duration-300 ease-in-out hover:scale-105 hover:shadow-md rounded-lg font-semibold"
+            >
+              <div className="flex items-center space-x-2">
+                <Trophy className="w-4 h-4" />
+                <span>ランキング</span>
+              </div>
+            </TabsTrigger>
+            <TabsTrigger 
+              value="profile"
+              className="relative data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-500 data-[state=active]:to-green-600 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-green-200 data-[state=active]:scale-105 transition-all duration-300 ease-in-out hover:scale-105 hover:shadow-md rounded-lg font-semibold"
+            >
+              <div className="flex items-center space-x-2">
+                <Users className="w-4 h-4" />
+                <span>プロフィール</span>
+              </div>
+            </TabsTrigger>
             <TabsTrigger 
               value="notifications" 
-              className="relative"
+              className="relative data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-purple-600 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-purple-200 data-[state=active]:scale-105 transition-all duration-300 ease-in-out hover:scale-105 hover:shadow-md rounded-lg font-semibold"
               onClick={() => fetchNotifications()}
             >
-              通知
-              {notifications && Array.isArray(notifications) && notifications.filter(n => !n.is_read).length > 0 && (
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                  {notifications.filter(n => !n.is_read).length}
-                </span>
-              )}
+              <div className="flex items-center space-x-2">
+                <Bell className="w-4 h-4" />
+                <span>通知</span>
+                {notifications && Array.isArray(notifications) && notifications.filter(n => !n.is_read).length > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center animate-pulse shadow-lg">
+                    {notifications.filter(n => !n.is_read).length}
+                  </span>
+                )}
+              </div>
             </TabsTrigger>
           </TabsList>
 
@@ -1453,7 +1655,7 @@ const WebApp: React.FC = () => {
               
               {selectedSubmission.comment && (
                 <p className="text-lg italic text-gray-700">
-                  "{selectedSubmission.comment}"
+                  {selectedSubmission.comment}
                 </p>
               )}
               
@@ -1488,6 +1690,16 @@ const WebApp: React.FC = () => {
             <AlertDialogCancel>キャンセル</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
+                // プロフィールデータをクリア
+                setMySubmissions([]);
+                setUserSettings({
+                  username: 'パンチマスター',
+                  email: 'punch@example.com',
+                  profileImage: null,
+                  bio: 'パンチの速さを競い合いましょう！'
+                });
+                setShowSettings(false);
+                // ログアウト実行
                 signOut({ callbackUrl: '/' });
                 setShowLogoutDialog(false);
               }}
