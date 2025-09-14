@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from 'next/server'
 
 const DJANGO_API_URL = process.env.DJANGO_API_URL || 'https://world-fastest-punch-backend.onrender.com'
 
+// デバッグ用ログ
+console.log('DJANGO_API_URL:', DJANGO_API_URL)
+console.log('process.env.DJANGO_API_URL:', process.env.DJANGO_API_URL)
+
 // POST /api/submissions - 画像アップロード
 export async function POST(request: NextRequest) {
   try {
