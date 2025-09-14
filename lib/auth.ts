@@ -56,19 +56,8 @@ export const authOptions: NextAuthOptions = {
         token.name = user.name;
         token.picture = user.image;
         
-        // Django APIからユーザーのロール情報を取得
-        try {
-          const response = await fetch(`${process.env.DJANGO_API_URL || 'https://world-fastest-punch-backend.onrender.com'}/api/profile/`);
-          if (response.ok) {
-            const profile = await response.json();
-            token.role = profile.role || 'USER';
-          } else {
-            token.role = 'USER';
-          }
-        } catch (error) {
-          console.error('Failed to fetch user role:', error);
-          token.role = 'USER';
-        }
+        // Django APIからユーザーのロール情報を取得（ビルド時は無効化）
+        token.role = 'USER';
       }
       return token;
     },
