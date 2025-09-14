@@ -113,9 +113,9 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # CORS settings
 CORS_ALLOWED_ORIGINS = [
-    "https://世界最速パンチ.vercel.app",
+    "https://world-fastest-punch-b1ndmhr49-alex1-1-1s-projects.vercel.app",
     "https://alex1-1-1s-projects.vercel.app",
-    "https://world-fastest-punch-backend.onrender.com",
+    "https://world-fastest-punch.onrender.com",
     "http://localhost:3000",
     "http://127.0.0.1:3000",
 ]
