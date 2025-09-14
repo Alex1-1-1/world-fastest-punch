@@ -1,93 +1,34 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+
+const DJANGO_API_URL = process.env.DJANGO_API_URL || 'http://localhost:8000'
 
 // GET /api/ranking - ランキング取得
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
-    const category = searchParams.get('category') as string
-    const week = parseInt(searchParams.get('week') || new Date().getWeek().toString())
-    const year = parseInt(searchParams.get('year') || new Date().getFullYear().toString())
+    const category = searchParams.get('category')
+    const week = searchParams.get('week')
+    const year = searchParams.get('year')
 
-    const whereClause: any = {
-      status: 'APPROVED',
-      speed: { not: null }
+    // Django APIからランキングを取得
+    const params = new URLSearchParams()
+    if (category) params.append('category', category)
+    if (week) params.append('week', week)
+    if (year) params.append('year', year)
+
+    const response = await fetch(`${DJANGO_API_URL}/api/ranking/?${params.toString()}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    })
+
+    if (!response.ok) {
+      throw new Error(`Django API error: ${response.status}`)
     }
 
-    // カテゴリ別の速度範囲を設定
-    if (category) {
-      const speedRanges = {
-        'VERY_FAST': { gte: 100 },
-        'QUITE_FAST': { gte: 80, lt: 100 },
-        'MODERATE': { gte: 60, lt: 80 },
-        'SLOW': { gte: 40, lt: 60 },
-        'VERY_SLOW': { gte: 0, lt: 40 }
-      }
-      
-      if (speedRanges[category as keyof typeof speedRanges]) {
-        whereClause.speed = speedRanges[category as keyof typeof speedRanges]
-      }
-    }
-
-    const submissions = await prisma.submission.findMany({
-      where: whereClause,
-      select: {
-        id: true,
-        thumbnailUrl: true,
-        speed: true,
-        comment: true,
-        createdAt: true,
-        user: {
-          select: {
-            name: true,
-            image: true
-          }
-        }
-      },
-      orderBy: {
-        speed: 'desc'
-      },
-      take: 50
-    })
-
-    // 週次ランキングスナップショットを取得
-    const weeklyRankings = await prisma.ranking.findMany({
-      where: {
-        week,
-        year,
-        ...(category && { category: category as any })
-      },
-      include: {
-        submission: {
-          select: {
-            id: true,
-            thumbnailUrl: true,
-            speed: true,
-            comment: true,
-            user: {
-              select: {
-                name: true,
-                image: true
-              }
-            }
-          }
-        }
-      },
-      orderBy: {
-        position: 'asc'
-      }
-    })
-
-    return NextResponse.json({
-      currentRankings: submissions,
-      weeklyRankings: weeklyRankings.map(r => ({
-        position: r.position,
-        ...r.submission
-      })),
-      category,
-      week,
-      year
-    })
+    const data = await response.json()
+    return NextResponse.json(data)
 
   } catch (error) {
     console.error('ランキング取得エラー:', error)
@@ -96,18 +37,6 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     )
   }
-}
-
-// 週番号を取得するヘルパー関数
-declare global {
-  interface Date {
-    getWeek(): number
-  }
-}
-
-Date.prototype.getWeek = function() {
-  const onejan = new Date(this.getFullYear(), 0, 1)
-  return Math.ceil((((this.getTime() - onejan.getTime()) / 86400000) + onejan.getDay() + 1) / 7)
 }
 
 
