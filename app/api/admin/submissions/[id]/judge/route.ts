@@ -34,7 +34,7 @@ export async function POST(
 
     // まずDjango APIにログインしてセッションを確立
     console.log('Django APIにログイン中...');
-    const loginResponse = await fetch(`${process.env.DJANGO_API_URL || 'https://world-fastest-punch-backend.onrender.com'}/api/auth/login/`, {
+    const loginResponse = await fetch(`${process.env.DJANGO_API_URL || 'https://world-fastest-punch.onrender.com'}/api/auth/login/`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -60,7 +60,7 @@ export async function POST(
     const setCookieHeader = loginResponse.headers.get('set-cookie');
     console.log('セッションクッキー:', setCookieHeader);
 
-    const djangoUrl = `${process.env.DJANGO_API_URL || 'https://world-fastest-punch-backend.onrender.com'}/api/submissions/${params.id}/judge/`;
+    const djangoUrl = `${process.env.DJANGO_API_URL || 'https://world-fastest-punch.onrender.com'}/api/submissions/${params.id}/judge/`;
     const djangoBody = {
       speed_kmh: speed,
       metaphor_comment: comment,

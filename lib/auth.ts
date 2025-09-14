@@ -75,7 +75,7 @@ export const authOptions: NextAuthOptions = {
       // Google認証成功時にDjango APIにユーザー情報を送信
       if (account?.provider === 'google') {
         try {
-          const response = await fetch(`${process.env.DJANGO_API_URL || 'https://world-fastest-punch-backend.onrender.com'}/api/auth/sync-user/`, {
+          const response = await fetch(`${process.env.DJANGO_API_URL || 'https://world-fastest-punch.onrender.com'}/api/auth/sync-user/`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
