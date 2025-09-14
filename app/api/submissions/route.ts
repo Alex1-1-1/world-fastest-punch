@@ -19,8 +19,8 @@ export async function POST(request: NextRequest) {
     }
 
     const formData = await request.formData()
-    const file = formData.get('image') as File
-    const userId = formData.get('userId') as string
+    const file = (formData as any).get('image') as File
+    const userId = (formData as any).get('userId') as string
 
     if (!file) {
       return NextResponse.json({ error: '画像ファイルが必要です' }, { status: 400 })

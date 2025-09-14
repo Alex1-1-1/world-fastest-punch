@@ -30,6 +30,8 @@ export default function AdminSignInPage() {
     e.preventDefault();
     setIsLoading(true);
     try {
+      console.log('管理者ログイン試行:', formData);
+      
       // 管理者専用アカウントでログイン
       const response = await fetch('http://localhost:8000/api/auth/login/', {
         method: 'POST',
@@ -42,8 +44,12 @@ export default function AdminSignInPage() {
         }),
       });
 
+      console.log('レスポンスステータス:', response.status);
+      console.log('レスポンスヘッダー:', response.headers);
+
       if (response.ok) {
         const userData = await response.json();
+        console.log('ユーザーデータ:', userData);
         
         // 管理者権限をチェック（is_staffまたはis_superuser）
         if (userData.is_staff || userData.is_superuser) {
@@ -56,13 +62,16 @@ export default function AdminSignInPage() {
             is_superuser: userData.is_superuser
           }));
           
+          console.log('管理者ログイン成功、ダッシュボードに遷移');
           // 管理者ダッシュボードに直接遷移
           window.location.href = '/admin/dashboard';
         } else {
+          console.log('管理者権限なし:', userData);
           alert('管理者権限がありません。\n\n管理者専用アカウントでログインしてください。\n不正なアクセス試行は記録されています。');
         }
       } else {
         const errorData = await response.json();
+        console.log('ログインエラー:', errorData);
         alert(`ログインに失敗しました。\n\n${errorData.error || '管理者権限のあるアカウントでログインしてください。'}\n不正なアクセス試行は記録されています。`);
       }
     } catch (error) {

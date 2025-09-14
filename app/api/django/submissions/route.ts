@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
     
     const response = await fetch(`${DJANGO_API_URL}/submissions/`, {
       method: 'POST',
-      body: formData,
+      body: formData as any,
     });
     
     const data = await response.json();

@@ -460,11 +460,14 @@ class JudgmentCreateView(generics.CreateAPIView):
             existing_judgment = Judgment.objects.filter(submission=submission).first()
             if existing_judgment:
                 print(f"DEBUG: 既存の判定を更新 - 判定ID: {existing_judgment.id}")
+                print(f"DEBUG: 更新前のrejection_reason: {existing_judgment.rejection_reason}")
                 # 既存の判定を更新
                 for key, value in data.items():
+                    print(f"DEBUG: 設定中 - {key}: {value}")
                     setattr(existing_judgment, key, value)
                 existing_judgment.save()
                 judgment = existing_judgment
+                print(f"DEBUG: 更新後のrejection_reason: {judgment.rejection_reason}")
                 print(f"DEBUG: 既存判定更新成功 - {judgment.id}")
             else:
                 print(f"DEBUG: 新しい判定を作成")

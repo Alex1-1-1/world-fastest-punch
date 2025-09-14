@@ -15,8 +15,13 @@ export default function HomePage() {
               <h1 className="text-2xl font-bold text-gray-900">世界一速いパンチ</h1>
             </div>
             <div className="flex space-x-4">
-              <Link href="/app">
-                <Button variant="outline">アプリを試す</Button>
+              <Link href="/admin/signin">
+                <Button variant="outline" className="text-gray-600 hover:text-gray-900 border-gray-300 hover:border-gray-400">
+                  管理者用
+                </Button>
+              </Link>
+              <Link href="/game">
+                <Button variant="outline" className="border-gray-300 hover:border-gray-400">アプリを試す</Button>
               </Link>
             </div>
           </div>
@@ -40,7 +45,7 @@ export default function HomePage() {
               <Camera className="mr-2 h-5 w-5" />
               アプリをダウンロード
             </Button>
-            <Link href="/app">
+            <Link href="/game">
               <Button size="lg" variant="outline">
                 <Users className="mr-2 h-5 w-5" />
                 アプリを試す
@@ -150,7 +155,7 @@ export default function HomePage() {
               <Users className="mr-2 h-5 w-5" />
               Google Playでダウンロード
             </Button>
-            <Link href="/app">
+            <Link href="/game">
               <Button size="lg" variant="secondary">
                 <Trophy className="mr-2 h-5 w-5" />
                 Webで試す

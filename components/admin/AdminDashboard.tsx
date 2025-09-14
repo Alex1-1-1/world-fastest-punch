@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { signOut } from 'next-auth/react';
+import { unquoteOnce } from '@/utils/text';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -66,46 +67,87 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ adminUser }) => {
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
   const [formErrors, setFormErrors] = useState<Record<string, string[]>>({});
 
-  useEffect(() => {
-    // ローカルストレージからJWTトークンを確認
-    const storedToken = localStorage.getItem('admin_jwt_token');
-    if (storedToken) {
-      setJwtToken(storedToken);
-      console.log('ローカルストレージからJWTトークンを読み込み:', storedToken);
+  // トークンの有効性をチェックする関数
+  const checkTokenValidity = async (token: string): Promise<boolean> => {
+    try {
+      const response = await fetch('http://localhost:8000/api/profile/', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      return response.ok;
+    } catch (error) {
+      console.error('トークン有効性チェックエラー:', error);
+      return false;
     }
-    
-    // JWTトークンを取得
-    const getJwtToken = async () => {
-      try {
-        const response = await fetch('http://localhost:8000/api/token/', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            username: adminUser?.username || 'world.fastest.punch.kanri',
-            password: 'world.kanri'
-          }),
-        });
-        
-        if (response.ok) {
-          const data = await response.json();
-          setJwtToken(data.access);
-          // ローカルストレージにも保存
-          localStorage.setItem('admin_jwt_token', data.access);
-          console.log('JWTトークン取得成功:', data.access);
-        } else {
-          console.error('JWTトークン取得失敗:', response.status);
-        }
-      } catch (error) {
-        console.error('JWTトークン取得エラー:', error);
+  };
+
+  // JWTトークンを取得する関数
+  const getJwtToken = async (): Promise<string | null> => {
+    try {
+      const response = await fetch('http://localhost:8000/api/token/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username: adminUser?.username || 'world.fastest.punch.kanri',
+          password: 'world.kanri'
+        }),
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        console.log('JWTトークン取得成功:', data.access);
+        return data.access;
+      } else {
+        console.error('JWTトークン取得失敗:', response.status);
+        return null;
       }
+    } catch (error) {
+      console.error('JWTトークン取得エラー:', error);
+      return null;
+    }
+  };
+
+  useEffect(() => {
+    const initializeToken = async () => {
+      if (!adminUser) return;
+      
+      // ローカルストレージからJWTトークンを確認
+      const storedToken = localStorage.getItem('admin_jwt_token');
+      
+      if (storedToken) {
+        console.log('ローカルストレージからJWTトークンを読み込み:', storedToken);
+        // トークンの有効性をチェック
+        const isValid = await checkTokenValidity(storedToken);
+        if (isValid) {
+          setJwtToken(storedToken);
+          console.log('保存されたトークンは有効です');
+        } else {
+          console.log('保存されたトークンは無効です。新しいトークンを取得します。');
+          localStorage.removeItem('admin_jwt_token');
+          const newToken = await getJwtToken();
+          if (newToken) {
+            setJwtToken(newToken);
+            localStorage.setItem('admin_jwt_token', newToken);
+          }
+        }
+      } else {
+        // トークンが保存されていない場合は新規取得
+        const newToken = await getJwtToken();
+        if (newToken) {
+          setJwtToken(newToken);
+          localStorage.setItem('admin_jwt_token', newToken);
+        }
+      }
+      
+      // データを取得
+      await fetchData();
     };
     
-    if (adminUser) {
-      getJwtToken();
-      fetchData();
-    }
+    initializeToken();
   }, [adminUser]);
 
   const fetchData = async () => {
@@ -130,13 +172,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ adminUser }) => {
             (item.watermarked_image.startsWith('http') ? item.watermarked_image : `http://localhost:8000${item.watermarked_image}`) :
             (item.image.startsWith('http') ? item.image : `http://localhost:8000${item.image}`),
           speed: item.judgment?.speed_kmh || null,
-          comment: (() => {
-            const originalComment = item.judgment?.metaphor_comment;
-            console.log('管理者デバッグ - 元のコメント:', originalComment, 'タイプ:', typeof originalComment);
-            const cleanedComment = originalComment?.replace(/^"+|"+$/g, '');
-            console.log('管理者デバッグ - クリーン後のコメント:', cleanedComment);
-            return cleanedComment || null;
-          })(),
+          comment: unquoteOnce(item.judgment?.metaphor_comment),
           description: item.description || '',
           status: item.is_judged ? 'APPROVED' : 'PENDING',
           createdAt: item.created_at,
@@ -201,6 +237,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ adminUser }) => {
       const requestData = {
         speed_kmh: judgmentForm.status === 'APPROVED' ? parseFloat(judgmentForm.speed) : 0,
         metaphor_comment: judgmentForm.status === 'APPROVED' ? judgmentForm.comment : judgmentForm.rejectionReason,
+        rejection_reason: judgmentForm.status === 'REJECTED' ? judgmentForm.rejectionReason : '',
         judgment: judgmentForm.status,
         // judge_nameはサーバー側で自動設定されるため送信しない
       };
@@ -270,6 +307,65 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ adminUser }) => {
         const errorData = await response.json();
         console.error('判定保存エラー:', errorData);
         console.error('エラーレスポンス:', response.status, response.statusText);
+        
+        // 401エラー（認証エラー）の場合は再ログインを試行
+        if (response.status === 401) {
+          console.log('認証エラーが発生しました。再ログインを試行します。');
+          
+          try {
+            // JWTトークンを再取得
+            const tokenResponse = await fetch('http://localhost:8000/api/token/', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                username: adminUser?.username || 'world.fastest.punch.kanri',
+                password: 'world.kanri'
+              }),
+            });
+            
+            if (tokenResponse.ok) {
+              const tokenData = await tokenResponse.json();
+              setJwtToken(tokenData.access);
+              localStorage.setItem('admin_jwt_token', tokenData.access);
+              console.log('JWTトークン再取得成功。再試行します。');
+              
+              // 再試行
+              const retryResponse = await fetch(`/api/admin/rejudge/${submissionId}`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${tokenData.access}`,
+                },
+                body: JSON.stringify(requestData),
+              });
+              
+              if (retryResponse.ok) {
+                const result = await retryResponse.json();
+                console.log('再試行で判定保存成功:', result);
+                await fetchData();
+                setSelectedSubmission(null);
+                setJudgmentForm({ speed: '5', comment: '', status: 'APPROVED', rejectionReason: '' });
+                setFormErrors({});
+                alert(judgmentForm.status === 'APPROVED' ? '承認しました' : '却下しました');
+                return;
+              } else {
+                console.error('再試行でも失敗:', retryResponse.status);
+                alert('認証エラーが解決できませんでした。ページを再読み込みしてください。');
+                return;
+              }
+            } else {
+              console.error('JWTトークン再取得失敗:', tokenResponse.status);
+              alert('認証トークンが取得できません。管理者アカウントを確認してください。');
+              return;
+            }
+          } catch (error) {
+            console.error('再ログインエラー:', error);
+            alert('認証エラーが解決できませんでした。ページを再読み込みしてください。');
+            return;
+          }
+        }
         
         // バリデーションエラーをフォームに表示
         if (response.status === 400 && typeof errorData === 'object') {

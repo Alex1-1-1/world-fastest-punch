@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useSession, signIn, signOut } from 'next-auth/react';
+import { unquoteOnce } from '@/utils/text';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -313,20 +314,13 @@ const WebApp: React.FC = () => {
             thumbnailUrl: item.thumbnail || item.image, // 既に絶対URLで返されている
             watermarkedUrl: item.watermarked_image,
             speed: item.judgment?.speed_kmh || null,
-            comment: (() => {
-              const originalComment = item.judgment?.metaphor_comment;
-              console.log('デバッグ - 元のコメント:', originalComment, 'タイプ:', typeof originalComment);
-              const cleanedComment = originalComment?.replace(/^"+|"+$/g, '');
-              console.log('デバッグ - クリーン後のコメント:', cleanedComment);
-              return cleanedComment || null;
-            })(),
+            comment: unquoteOnce(item.judgment?.metaphor_comment),
             description: item.description || '',
             status: 'APPROVED',
             createdAt: item.created_at,
             user: { name: item.user_username || 'テストユーザー' }
           }));
         console.log('変換後のsubmissions:', submissions);
-        console.log('デバッグ - 元のAPIデータ:', data.results);
         setSubmissions(submissions);
       } else {
         // APIが失敗した場合はモックデータを使用
@@ -376,13 +370,7 @@ const WebApp: React.FC = () => {
             thumbnailUrl: item.thumbnail || item.image,
             watermarkedUrl: item.watermarked_image,
             speed: item.judgment?.speed_kmh || null,
-            comment: (() => {
-              const originalComment = item.judgment?.metaphor_comment;
-              console.log('デバッグ - 元のコメント:', originalComment, 'タイプ:', typeof originalComment);
-              const cleanedComment = originalComment?.replace(/^"+|"+$/g, '');
-              console.log('デバッグ - クリーン後のコメント:', cleanedComment);
-              return cleanedComment || null;
-            })(),
+            comment: unquoteOnce(item.judgment?.metaphor_comment),
             status: item.is_judged ? 'APPROVED' : 'PENDING',
             createdAt: item.created_at,
             user: { name: item.user_username || 'テストユーザー' },
@@ -602,8 +590,9 @@ const WebApp: React.FC = () => {
       }
     } catch (error) {
       console.error('投稿エラー:', error);
-      console.error('エラーの詳細:', error.message);
-      alert(`ネットワークエラーが発生しました: ${error.message}`);
+      const errorMessage = error instanceof Error ? error.message : '不明なエラーが発生しました';
+      console.error('エラーの詳細:', errorMessage);
+      alert(`ネットワークエラーが発生しました: ${errorMessage}`);
     } finally {
       setLoading(false);
     }
@@ -917,12 +906,19 @@ const WebApp: React.FC = () => {
 
         {notifications && Array.isArray(notifications) && notifications.length > 0 ? (
           <div className="space-y-3">
-            {notifications.map((notification) => (
+            {notifications.map((notification) => {
+              console.log('通知データ:', notification);
+              return (
               <Card key={notification.id} className={`p-4 ${!notification.is_read ? 'bg-blue-50 border-blue-200' : ''}`}>
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <h3 className="font-semibold text-gray-900">{notification.title}</h3>
                     <p className="text-gray-600 mt-1">{notification.message}</p>
+                    {notification.rejection_reason && (
+                      <p className="text-red-600 mt-2 font-medium">
+                        理由: {notification.rejection_reason}
+                      </p>
+                    )}
                     <p className="text-sm text-gray-500 mt-2">
                       {new Date(notification.created_at).toLocaleString('ja-JP')}
                     </p>
@@ -937,7 +933,8 @@ const WebApp: React.FC = () => {
                   )}
                 </div>
               </Card>
-            ))}
+              );
+            })}
           </div>
         ) : (
           <div className="text-center py-12">
@@ -1050,7 +1047,14 @@ const WebApp: React.FC = () => {
           {filteredSubmissions.length > 0 ? (
             filteredSubmissions
               .slice(0, selectedCategory === 'OVERALL' ? 10 : filteredSubmissions.length)
-              .map((submission, index) => (
+              .map((submission, index) => {
+                console.log(`ランキング ${index + 1}位 - 投稿データ:`, {
+                  id: submission.id,
+                  description: submission.description,
+                  speed: submission.speed,
+                  user: submission.user
+                });
+                return (
               <Card key={submission.id} className={`cursor-pointer hover:shadow-2xl transition-all duration-300 transform hover:scale-[1.02] ${
                 index === 0 ? 'border-4 border-yellow-300 bg-gradient-to-br from-yellow-50 via-yellow-100 to-yellow-200 shadow-yellow-300' :
                 index === 1 ? 'border-4 border-gray-300 bg-gradient-to-br from-gray-50 via-gray-100 to-gray-200 shadow-gray-300' :
@@ -1128,7 +1132,7 @@ const WebApp: React.FC = () => {
                           </div>
                           <div>
                             <p className="font-bold text-xl text-gray-800">
-                              {submission.user?.name || submission.user || '匿名ユーザー'}
+                              {submission.user?.name || (typeof submission.user === 'string' ? submission.user : '匿名ユーザー')}
                             </p>
                             {index < 3 && (
                               <p className={`text-sm font-medium ${
@@ -1181,7 +1185,14 @@ const WebApp: React.FC = () => {
                         {submission.description && (
                           <div className="flex-1 bg-gray-50 rounded-lg p-3 border-l-4 border-orange-400">
                             <p className="text-gray-700 italic font-medium">
-                              "{submission.description}"
+                              {unquoteOnce(submission.description)}
+                            </p>
+                          </div>
+                        )}
+                        {!submission.description && (
+                          <div className="flex-1 bg-gray-50 rounded-lg p-3 border-l-4 border-gray-300">
+                            <p className="text-gray-500 italic font-medium">
+                              説明文なし
                             </p>
                           </div>
                         )}
@@ -1190,7 +1201,8 @@ const WebApp: React.FC = () => {
                   </div>
                 </CardContent>
               </Card>
-            ))
+              );
+            })
           ) : (
             <Card className="text-center py-16 bg-gradient-to-br from-gray-50 to-gray-100 border-2 border-dashed border-gray-300">
               <CardContent>
@@ -1361,7 +1373,7 @@ const WebApp: React.FC = () => {
                         )}
                         {submission.comment && (
                           <div className="text-sm text-gray-600">
-                            <span className="font-medium">管理者のコメント:</span> {submission.comment}
+                            <span className="font-medium">管理者のコメント:</span> {unquoteOnce(submission.comment)}
                           </div>
                         )}
                         <div className="text-xs text-gray-400">
@@ -1655,7 +1667,7 @@ const WebApp: React.FC = () => {
               
               {selectedSubmission.comment && (
                 <p className="text-lg italic text-gray-700">
-                  {selectedSubmission.comment}
+                  {unquoteOnce(selectedSubmission.comment)}
                 </p>
               )}
               
