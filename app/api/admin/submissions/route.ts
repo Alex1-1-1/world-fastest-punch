@@ -1,6 +1,3 @@
-export const runtime = 'nodejs';
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
@@ -19,19 +16,13 @@ export async function GET(request: NextRequest) {
     const response = await fetch(`${DJANGO_API_URL}/api/admin/submissions/`, {
       method: 'GET',
       headers: {
-        'Accept': 'application/json',
         'Authorization': `Bearer ${session.accessToken || ''}`,
         'Content-Type': 'application/json',
       },
-      cache: 'no-store',
     })
 
     if (!response.ok) {
-      const body = await response.text();
-      return NextResponse.json(
-        { error: 'upstream', status: response.status, body: body.slice(0, 500) },
-        { status: 500 }
-      )
+      throw new Error(`Django API error: ${response.status}`)
     }
 
     const data = await response.json()

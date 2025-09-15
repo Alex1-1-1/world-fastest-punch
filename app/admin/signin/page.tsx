@@ -1,6 +1,5 @@
 'use client';
 
-import { browserApi } from '@/lib/api';
 import { signIn, signOut } from 'next-auth/react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -34,7 +33,7 @@ export default function AdminSignInPage() {
       console.log('管理者ログイン試行:', formData);
       
       // 管理者専用アカウントでログイン
-      const response = await browserApi('/api/auth/login/', {
+      const response = await fetch('http://localhost:8000/api/auth/login/', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
