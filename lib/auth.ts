@@ -17,7 +17,7 @@ export const authOptions: NextAuthOptions = {
 
         try {
           // Django APIでユーザー認証
-          const response = await fetch(`${process.env.DJANGO_API_URL || 'https://world-fastest-punch-backend.onrender.com'}/api/auth/login/`, {
+          const response = await fetch(`${process.env.DJANGO_API_URL || 'https://world-fastest-punch.onrender.com'}/api/auth/login/`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -26,6 +26,7 @@ export const authOptions: NextAuthOptions = {
               email: credentials.email,
               password: credentials.password,
             }),
+            cache: 'no-store',
           });
 
           if (response.ok) {
@@ -86,6 +87,7 @@ export const authOptions: NextAuthOptions = {
               name: user.name,
               picture: user.image,
             }),
+            cache: 'no-store',
           });
           
           if (!response.ok) {
@@ -110,5 +112,7 @@ export const authOptions: NextAuthOptions = {
   },
   pages: {
     signIn: '/auth/signin',
+    error: '/auth/error',
   },
+  debug: process.env.NODE_ENV === 'development',
 }
