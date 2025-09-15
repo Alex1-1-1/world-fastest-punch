@@ -1,5 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  experimental: {
+    runtime: 'nodejs', // 全体を Node.js ランタイムに強制
+  },
   images: {
     domains: ['lh3.googleusercontent.com'],
   },

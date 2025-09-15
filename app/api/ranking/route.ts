@@ -22,11 +22,17 @@ export async function GET(request: NextRequest) {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
+        'Accept': 'application/json',
       },
+      cache: 'no-store',
     })
 
     if (!response.ok) {
-      throw new Error(`Django API error: ${response.status}`)
+      const body = await response.text()
+      return NextResponse.json(
+        { error: 'upstream', status: response.status, body: body.slice(0, 500) },
+        { status: 500 }
+      )
     }
 
     const data = await response.json()

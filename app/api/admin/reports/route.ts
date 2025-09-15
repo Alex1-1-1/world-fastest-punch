@@ -19,9 +19,11 @@ export async function GET(request: NextRequest) {
     const response = await fetch(`${DJANGO_API_URL}/api/admin/reports/`, {
       method: 'GET',
       headers: {
+        'Accept': 'application/json',
         'Authorization': `Bearer ${session.accessToken || ''}`,
         'Content-Type': 'application/json',
       },
+      cache: 'no-store',
     })
 
     if (!response.ok) {
@@ -35,6 +37,7 @@ export async function GET(request: NextRequest) {
     console.error('管理者通報取得エラー:', error)
     return NextResponse.json(
       { error: '通報の取得に失敗しました' },
+      cache: 'no-store',
       { status: 500 }
     )
   }

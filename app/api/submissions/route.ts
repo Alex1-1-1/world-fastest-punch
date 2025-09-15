@@ -22,6 +22,7 @@ export async function POST(request: NextRequest) {
     console.error('投稿エラー:', error)
     return NextResponse.json(
       { error: error instanceof Error ? error.message : '投稿に失敗しました' },
+      cache: 'no-store',
       { status: 500 }
     )
   }
@@ -42,8 +43,10 @@ export async function GET(request: NextRequest) {
     const response = await fetch(`${DJANGO_API_URL}/api/submissions/?${params.toString()}`, {
       method: 'GET',
       headers: {
+        'Accept': 'application/json',
         'Content-Type': 'application/json',
       },
+      cache: 'no-store',
     })
 
     if (!response.ok) {
@@ -57,6 +60,7 @@ export async function GET(request: NextRequest) {
     console.error('ギャラリー取得エラー:', error)
     return NextResponse.json(
       { error: 'ギャラリーの取得に失敗しました' },
+      cache: 'no-store',
       { status: 500 }
     )
   }
