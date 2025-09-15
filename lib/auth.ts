@@ -17,7 +17,7 @@ export const authOptions: NextAuthOptions = {
 
         try {
           // Django APIでユーザー認証
-          const response = await fetch(`${process.env.DJANGO_API_URL || 'https://world-fastest-punch-backend.onrender.com'}/api/auth/login/`, {
+          const response = await fetch(`${process.env.DJANGO_API_URL || 'https://world-fastest-punch.onrender.com'}/api/auth/login/`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -58,7 +58,7 @@ export const authOptions: NextAuthOptions = {
         
         // Django APIからユーザーのロール情報を取得
         try {
-          const response = await fetch(`${process.env.DJANGO_API_URL || 'https://world-fastest-punch-backend.onrender.com'}/api/profile/`);
+          const response = await fetch(`${process.env.DJANGO_API_URL || 'https://world-fastest-punch.onrender.com'}/api/profile/`);
           if (response.ok) {
             const profile = await response.json();
             token.role = profile.role || 'USER';
@@ -86,7 +86,7 @@ export const authOptions: NextAuthOptions = {
       // Google認証成功時にDjango APIにユーザー情報を送信
       if (account?.provider === 'google') {
         try {
-          await fetch(`${process.env.DJANGO_API_URL || 'https://world-fastest-punch-backend.onrender.com'}/api/auth/sync-user/`, {
+          await fetch(`${process.env.DJANGO_API_URL || 'https://world-fastest-punch.onrender.com'}/api/auth/sync-user/`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
