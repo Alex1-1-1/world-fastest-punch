@@ -70,7 +70,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ adminUser }) => {
   // トークンの有効性をチェックする関数
   const checkTokenValidity = async (token: string): Promise<boolean> => {
     try {
-      const response = await fetch('http://localhost:8000/api/profile/', {
+      const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'https://world-fastest-punch-backend.onrender.com';
+      const response = await fetch(`${API_BASE}/api/profile/`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -86,7 +87,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ adminUser }) => {
   // JWTトークンを取得する関数
   const getJwtToken = async (): Promise<string | null> => {
     try {
-      const response = await fetch('http://localhost:8000/api/token/', {
+      const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'https://world-fastest-punch-backend.onrender.com';
+      const response = await fetch(`${API_BASE}/api/token/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -153,9 +155,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ adminUser }) => {
   const fetchData = async () => {
     try {
       setLoading(true);
+      const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'https://world-fastest-punch-backend.onrender.com';
       const [submissionsRes, reportsRes] = await Promise.all([
-        fetch('http://localhost:8000/api/admin/submissions/'),
-        fetch('http://localhost:8000/api/admin/reports/'),
+        fetch(`${API_BASE}/api/admin/submissions/`),
+        fetch(`${API_BASE}/api/admin/reports/`),
       ]);
 
       if (submissionsRes.ok) {
@@ -164,13 +167,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ adminUser }) => {
         // Django APIのレスポンス形式に合わせて変換
         const submissions = submissionsData.map((item: any) => ({
           id: item.id ? item.id.toString() : 'unknown',
-          imageUrl: item.image.startsWith('http') ? item.image : `http://localhost:8000${item.image}`,
+          imageUrl: item.image.startsWith('http') ? item.image : `${API_BASE}${item.image}`,
           thumbnailUrl: item.thumbnail ? 
-            (item.thumbnail.startsWith('http') ? item.thumbnail : `http://localhost:8000${item.thumbnail}`) :
-            (item.image.startsWith('http') ? item.image : `http://localhost:8000${item.image}`),
+            (item.thumbnail.startsWith('http') ? item.thumbnail : `${API_BASE}${item.thumbnail}`) :
+            (item.image.startsWith('http') ? item.image : `${API_BASE}${item.image}`),
           watermarkedUrl: item.watermarked_image ? 
-            (item.watermarked_image.startsWith('http') ? item.watermarked_image : `http://localhost:8000${item.watermarked_image}`) :
-            (item.image.startsWith('http') ? item.image : `http://localhost:8000${item.image}`),
+            (item.watermarked_image.startsWith('http') ? item.watermarked_image : `${API_BASE}${item.watermarked_image}`) :
+            (item.image.startsWith('http') ? item.image : `${API_BASE}${item.image}`),
           speed: item.judgment?.speed_kmh || null,
           comment: unquoteOnce(item.judgment?.metaphor_comment),
           description: item.description || '',
@@ -250,7 +253,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ adminUser }) => {
         
         // JWTトークンを再取得
         try {
-          const tokenResponse = await fetch('http://localhost:8000/api/token/', {
+          const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'https://world-fastest-punch-backend.onrender.com';
+          const tokenResponse = await fetch(`${API_BASE}/api/token/`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -314,7 +318,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ adminUser }) => {
           
           try {
             // JWTトークンを再取得
-            const tokenResponse = await fetch('http://localhost:8000/api/token/', {
+            const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'https://world-fastest-punch-backend.onrender.com';
+          const tokenResponse = await fetch(`${API_BASE}/api/token/`, {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
@@ -394,7 +399,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ adminUser }) => {
 
   const handleReportAction = async (reportId: string, action: 'RESOLVED' | 'DISMISSED') => {
     try {
-      const response = await fetch(`http://localhost:8000/api/admin/reports/${reportId}/`, {
+      const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'https://world-fastest-punch-backend.onrender.com';
+      const response = await fetch(`${API_BASE}/api/admin/reports/${reportId}/`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',

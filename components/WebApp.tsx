@@ -56,7 +56,8 @@ const WebApp: React.FC = () => {
   // プロフィール情報を取得
   const fetchUserProfile = async () => {
     try {
-      const response = await fetch('http://localhost:8000/api/profile/');
+      const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'https://world-fastest-punch-backend.onrender.com';
+      const response = await fetch(`${API_BASE}/api/profile/`);
       if (response.ok) {
         const data = await response.json();
         console.log('プロフィールデータ:', data);
@@ -82,7 +83,8 @@ const WebApp: React.FC = () => {
   const fetchNotifications = async () => {
     try {
       console.log('通知取得開始...');
-      const response = await fetch('http://localhost:8000/api/notifications/');
+      const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'https://world-fastest-punch-backend.onrender.com';
+      const response = await fetch(`${API_BASE}/api/notifications/`);
       console.log('通知APIレスポンス:', response.status, response.ok);
       
       if (response.ok) {
@@ -138,7 +140,8 @@ const WebApp: React.FC = () => {
 
       console.log('保存するプロフィールデータ:', profileData);
 
-      const response = await fetch('http://localhost:8000/api/profile/', {
+      const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'https://world-fastest-punch-backend.onrender.com';
+      const response = await fetch(`${API_BASE}/api/profile/`, {
         method: 'PUT',
         body: formData,
       });
@@ -301,7 +304,8 @@ const WebApp: React.FC = () => {
     try {
       setLoading(true);
       // Django APIを直接呼び出し
-      const response = await fetch('http://localhost:8000/api/submissions/');
+      const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'https://world-fastest-punch-backend.onrender.com';
+      const response = await fetch(`${API_BASE}/api/submissions/`);
       if (response.ok) {
         const data = await response.json();
         console.log('Django APIレスポンス:', data);
@@ -341,7 +345,8 @@ const WebApp: React.FC = () => {
       console.log('現在のuserSettings:', userSettings);
       
       // Django APIを直接呼び出し
-      const response = await fetch('http://localhost:8000/api/submissions/');
+      const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'https://world-fastest-punch-backend.onrender.com';
+      const response = await fetch(`${API_BASE}/api/submissions/`);
       if (response.ok) {
         const data = await response.json();
         console.log('APIレスポンス全体:', data);
@@ -530,7 +535,8 @@ const WebApp: React.FC = () => {
 
       // Django APIに直接投稿
       console.log('Django APIに投稿開始...');
-      const apiResponse = await fetch('http://localhost:8000/api/submissions/', {
+      const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'https://world-fastest-punch-backend.onrender.com';
+      const apiResponse = await fetch(`${API_BASE}/api/submissions/`, {
         method: 'POST',
         body: formData,
       });
@@ -953,7 +959,8 @@ const WebApp: React.FC = () => {
   const markNotificationAsRead = async (notificationId: number) => {
     try {
       console.log('通知既読開始:', notificationId);
-      const response = await fetch(`http://localhost:8000/api/notifications/${notificationId}/read/`, {
+      const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'https://world-fastest-punch-backend.onrender.com';
+      const response = await fetch(`${API_BASE}/api/notifications/${notificationId}/read/`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',

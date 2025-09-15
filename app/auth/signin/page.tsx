@@ -32,7 +32,8 @@ export default function SignInPage() {
     try {
       if (isSignUp) {
         // 新規登録
-        const response = await fetch('http://localhost:8000/api/auth/register/', {
+        const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'https://world-fastest-punch-backend.onrender.com';
+        const response = await fetch(`${API_BASE}/api/auth/register/`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -108,7 +109,8 @@ export default function SignInPage() {
 
     setIsLoading(true);
     try {
-      const response = await fetch('http://localhost:8000/api/auth/reset-password/', {
+      const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'https://world-fastest-punch-backend.onrender.com';
+      const response = await fetch(`${API_BASE}/api/auth/reset-password/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
