@@ -22,7 +22,6 @@ export async function POST(request: NextRequest) {
     console.error('投稿エラー:', error)
     return NextResponse.json(
       { error: error instanceof Error ? error.message : '投稿に失敗しました' },
-      cache: 'no-store',
       { status: 500 }
     )
   }

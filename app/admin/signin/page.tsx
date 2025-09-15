@@ -1,8 +1,6 @@
-import { browserApi } from '@/lib/api';
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
-export const fetchCache = 'force-no-store';
+'use client';
 
+import { browserApi } from '@/lib/api';
 import { signIn, signOut } from 'next-auth/react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';

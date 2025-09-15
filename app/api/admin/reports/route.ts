@@ -37,7 +37,6 @@ export async function GET(request: NextRequest) {
     console.error('管理者通報取得エラー:', error)
     return NextResponse.json(
       { error: '通報の取得に失敗しました' },
-      cache: 'no-store',
       { status: 500 }
     )
   }
