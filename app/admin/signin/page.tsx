@@ -33,7 +33,7 @@ export default function AdminSignInPage() {
       console.log('管理者ログイン試行:', formData);
       
       // 管理者専用アカウントでログイン
-      const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'https://world-fastest-punch-backend.onrender.com';
+      const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'https://world-fastest-punch.onrender.com';
       const response = await fetch(`${API_BASE}/api/auth/login/`, {
         method: 'POST',
         headers: {

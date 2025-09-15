@@ -70,7 +70,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ adminUser }) => {
   // トークンの有効性をチェックする関数
   const checkTokenValidity = async (token: string): Promise<boolean> => {
     try {
-      const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'https://world-fastest-punch-backend.onrender.com';
+      const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'https://world-fastest-punch.onrender.com';
       const response = await fetch(`${API_BASE}/api/profile/`, {
         method: 'GET',
         headers: {
@@ -87,7 +87,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ adminUser }) => {
   // JWTトークンを取得する関数
   const getJwtToken = async (): Promise<string | null> => {
     try {
-      const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'https://world-fastest-punch-backend.onrender.com';
+      const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'https://world-fastest-punch.onrender.com';
       const response = await fetch(`${API_BASE}/api/token/`, {
         method: 'POST',
         headers: {
@@ -155,7 +155,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ adminUser }) => {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'https://world-fastest-punch-backend.onrender.com';
+      const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'https://world-fastest-punch.onrender.com';
       const [submissionsRes, reportsRes] = await Promise.all([
         fetch(`${API_BASE}/api/admin/submissions/`),
         fetch(`${API_BASE}/api/admin/reports/`),
@@ -253,7 +253,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ adminUser }) => {
         
         // JWTトークンを再取得
         try {
-          const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'https://world-fastest-punch-backend.onrender.com';
+          const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'https://world-fastest-punch.onrender.com';
           const tokenResponse = await fetch(`${API_BASE}/api/token/`, {
             method: 'POST',
             headers: {
@@ -318,7 +318,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ adminUser }) => {
           
           try {
             // JWTトークンを再取得
-            const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'https://world-fastest-punch-backend.onrender.com';
+            const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'https://world-fastest-punch.onrender.com';
           const tokenResponse = await fetch(`${API_BASE}/api/token/`, {
               method: 'POST',
               headers: {
@@ -399,7 +399,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ adminUser }) => {
 
   const handleReportAction = async (reportId: string, action: 'RESOLVED' | 'DISMISSED') => {
     try {
-      const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'https://world-fastest-punch-backend.onrender.com';
+      const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'https://world-fastest-punch.onrender.com';
       const response = await fetch(`${API_BASE}/api/admin/reports/${reportId}/`, {
         method: 'PATCH',
         headers: {
