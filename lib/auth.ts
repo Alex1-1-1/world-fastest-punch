@@ -56,8 +56,19 @@ export const authOptions: NextAuthOptions = {
         token.name = user.name;
         token.picture = user.image;
         
-        // Django APIからユーザーのロール情報を取得（ビルド時は無効化）
-        token.role = 'USER';
+        // Django APIからユーザーのロール情報を取得
+        try {
+          const response = await fetch(`${process.env.DJANGO_API_URL || 'https://world-fastest-punch-backend.onrender.com'}/api/profile/`);
+          if (response.ok) {
+            const profile = await response.json();
+            token.role = profile.role || 'USER';
+          } else {
+            token.role = 'USER';
+          }
+        } catch (error) {
+          console.error('Failed to fetch user role:', error);
+          token.role = 'USER';
+        }
       }
       return token;
     },
@@ -75,7 +86,7 @@ export const authOptions: NextAuthOptions = {
       // Google認証成功時にDjango APIにユーザー情報を送信
       if (account?.provider === 'google') {
         try {
-          const response = await fetch(`${process.env.DJANGO_API_URL || 'https://world-fastest-punch.onrender.com'}/api/auth/sync-user/`, {
+          const response = await fetch(`${process.env.DJANGO_API_URL || 'https://world-fastest-punch-backend.onrender.com'}/api/auth/sync-user/`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',

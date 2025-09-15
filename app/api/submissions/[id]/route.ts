@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-const DJANGO_API_URL = process.env.DJANGO_API_URL || 'https://world-fastest-punch.onrender.com'
+const DJANGO_API_URL = process.env.DJANGO_API_URL || 'https://world-fastest-punch-backend.onrender.com'
 
 // GET /api/submissions/[id] - 詳細取得
 export async function GET(
