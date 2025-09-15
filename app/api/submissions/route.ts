@@ -63,7 +63,6 @@ export async function GET(request: NextRequest) {
     console.error('ギャラリー取得エラー:', error)
     return NextResponse.json(
       { error: 'ギャラリーの取得に失敗しました' },
-      cache: 'no-store',
       { status: 500 }
     )
   }
