@@ -1,5 +1,7 @@
 'use client';
 
+import { browserApi } from '@/lib/api';
+
 import { signIn } from 'next-auth/react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -32,7 +34,7 @@ export default function SignInPage() {
     try {
       if (isSignUp) {
         // 新規登録
-        const response = await fetch('http://localhost:8000/api/auth/register/', {
+        const response = await browserApi('/api/auth/register/', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -108,7 +110,7 @@ export default function SignInPage() {
 
     setIsLoading(true);
     try {
-      const response = await fetch('http://localhost:8000/api/auth/reset-password/', {
+      const response = await browserApi('/api/auth/reset-password/', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

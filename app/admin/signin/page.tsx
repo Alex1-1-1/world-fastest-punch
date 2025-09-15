@@ -1,7 +1,7 @@
+import { browserApi } from '@/lib/api';
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 export const fetchCache = 'force-no-store';
-'use client';
 
 import { signIn, signOut } from 'next-auth/react';
 import { Button } from '@/components/ui/button';
@@ -36,7 +36,7 @@ export default function AdminSignInPage() {
       console.log('管理者ログイン試行:', formData);
       
       // 管理者専用アカウントでログイン
-      const response = await fetch('http://localhost:8000/api/auth/login/', {
+      const response = await browserApi('/api/auth/login/', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

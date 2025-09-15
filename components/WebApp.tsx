@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSession, signIn, signOut } from 'next-auth/react';
 import { unquoteOnce } from '@/utils/text';
+import { browserApi } from '@/lib/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -56,7 +57,7 @@ const WebApp: React.FC = () => {
   // プロフィール情報を取得
   const fetchUserProfile = async () => {
     try {
-      const response = await fetch('http://localhost:8000/api/profile/');
+      const response = await browserApi('/api/profile/');
       if (response.ok) {
         const data = await response.json();
         console.log('プロフィールデータ:', data);
@@ -82,7 +83,7 @@ const WebApp: React.FC = () => {
   const fetchNotifications = async () => {
     try {
       console.log('通知取得開始...');
-      const response = await fetch('http://localhost:8000/api/notifications/');
+      const response = await browserApi('/api/notifications/');
       console.log('通知APIレスポンス:', response.status, response.ok);
       
       if (response.ok) {
@@ -138,7 +139,7 @@ const WebApp: React.FC = () => {
 
       console.log('保存するプロフィールデータ:', profileData);
 
-      const response = await fetch('http://localhost:8000/api/profile/', {
+      const response = await browserApi('/api/profile/', {
         method: 'PUT',
         body: formData,
       });
@@ -301,7 +302,7 @@ const WebApp: React.FC = () => {
     try {
       setLoading(true);
       // Django APIを直接呼び出し
-      const response = await fetch('http://localhost:8000/api/submissions/');
+      const response = await browserApi('/api/submissions/');
       if (response.ok) {
         const data = await response.json();
         console.log('Django APIレスポンス:', data);
@@ -341,7 +342,7 @@ const WebApp: React.FC = () => {
       console.log('現在のuserSettings:', userSettings);
       
       // Django APIを直接呼び出し
-      const response = await fetch('http://localhost:8000/api/submissions/');
+      const response = await browserApi('/api/submissions/');
       if (response.ok) {
         const data = await response.json();
         console.log('APIレスポンス全体:', data);
@@ -530,7 +531,7 @@ const WebApp: React.FC = () => {
 
       // Django APIに直接投稿
       console.log('Django APIに投稿開始...');
-      const apiResponse = await fetch('http://localhost:8000/api/submissions/', {
+      const apiResponse = await browserApi('/api/submissions/', {
         method: 'POST',
         body: formData,
       });
