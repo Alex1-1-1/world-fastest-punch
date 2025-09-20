@@ -1,9 +1,6 @@
 #!/usr/bin/env bash
 set -euxo pipefail
 
-# リポジトリルートから start.sh が呼ばれる想定
-cd punch_backend
-
 # 1) DBマイグレーション
 python manage.py migrate --noinput
 
