@@ -61,6 +61,7 @@ def change_password(request):
 
 
 @api_view(['POST'])
+@permission_classes([AllowAny])
 def sync_user(request):
     """Google認証でユーザー情報を同期"""
     try:
@@ -138,6 +139,7 @@ def login_user(request):
 
 
 @api_view(['POST'])
+@permission_classes([AllowAny])
 def register_user(request):
     """新規ユーザー登録"""
     try:
