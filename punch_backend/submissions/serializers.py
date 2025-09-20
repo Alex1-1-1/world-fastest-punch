@@ -103,8 +103,14 @@ class UserProfileSerializer(serializers.ModelSerializer):
         if obj.profile_image:
             request = self.context.get('request')
             if request:
-                return request.build_absolute_uri(obj.profile_image.url)
-            return obj.profile_image.url
+                # 本番環境ではHTTPSを使用
+                base_url = request.build_absolute_uri('/')
+                if base_url.startswith('https://'):
+                    return f"https://world-fastest-punch.onrender.com{obj.profile_image.url}"
+                else:
+                    return request.build_absolute_uri(obj.profile_image.url)
+            # リクエストがない場合は絶対URLを構築
+            return f"https://world-fastest-punch.onrender.com{obj.profile_image.url}"
         return None
     
     def update(self, instance, validated_data):
