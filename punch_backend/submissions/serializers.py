@@ -96,10 +96,15 @@ class UserProfileSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = UserProfile
-        fields = ['profile_image', 'bio', 'role', 'created_at', 'updated_at']
+        fields = ['profile_image', 'profile_image_base64', 'bio', 'role', 'created_at', 'updated_at']
         read_only_fields = ['role', 'created_at', 'updated_at']
     
     def get_profile_image(self, obj):
+        # Base64画像を優先
+        if obj.profile_image_base64:
+            return obj.profile_image_base64
+        
+        # ファイル画像のフォールバック
         if obj.profile_image:
             request = self.context.get('request')
             if request:
@@ -118,7 +123,11 @@ class UserProfileSerializer(serializers.ModelSerializer):
         if 'profile_image' in self.initial_data:
             profile_image = self.initial_data['profile_image']
             if profile_image:
-                instance.profile_image = profile_image
+                # Base64画像として保存
+                if isinstance(profile_image, str) and profile_image.startswith('data:'):
+                    instance.profile_image_base64 = profile_image
+                else:
+                    instance.profile_image = profile_image
         
         # その他のフィールドを更新
         for attr, value in validated_data.items():
