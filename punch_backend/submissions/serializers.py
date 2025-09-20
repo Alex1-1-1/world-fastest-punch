@@ -119,14 +119,20 @@ class UserProfileSerializer(serializers.ModelSerializer):
         return None
     
     def update(self, instance, validated_data):
+        print(f"DEBUG: Serializer update - initial_data: {self.initial_data}")
+        print(f"DEBUG: Serializer update - validated_data: {validated_data}")
+        
         # プロフィール画像の処理
         if 'profile_image' in self.initial_data:
             profile_image = self.initial_data['profile_image']
+            print(f"DEBUG: Profile image found - type: {type(profile_image)}, starts with data: {isinstance(profile_image, str) and profile_image.startswith('data:') if isinstance(profile_image, str) else False}")
             if profile_image:
                 # Base64画像として保存
                 if isinstance(profile_image, str) and profile_image.startswith('data:'):
+                    print(f"DEBUG: Saving as Base64 - length: {len(profile_image)}")
                     instance.profile_image_base64 = profile_image
                 else:
+                    print(f"DEBUG: Saving as file")
                     instance.profile_image = profile_image
         
         # その他のフィールドを更新
@@ -134,6 +140,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
             setattr(instance, attr, value)
         
         instance.save()
+        print(f"DEBUG: After save - profile_image_base64: {instance.profile_image_base64}")
         return instance
 
 
