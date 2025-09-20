@@ -116,6 +116,8 @@ CORS_ALLOWED_ORIGINS = [
     "https://世界最速パンチ.vercel.app",
     "https://alex1-1-1s-projects.vercel.app",
     "https://world-fastest-punch-b1ndmhr49-alex1-1-1s-projects.vercel.app",
+    "https://world-fastest-punch-3eazimi5s-alex1-1-1s-projects.vercel.app",
+    "https://world-fastest-punch.vercel.app",
     "https://world-fastest-punch-backend.onrender.com",
     "http://localhost:3000",
     "http://127.0.0.1:3000",
@@ -124,6 +126,12 @@ CORS_ALLOWED_ORIGINS = [
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_HEADERS = ["authorization", "content-type"]
 CORS_ALLOW_METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"]
+
+# VercelのデプロイメントURLパターンを許可
+CORS_ALLOWED_ORIGIN_REGEXES = [
+    r"https://.*\.vercel\.app$",
+    r"https://.*\.alex1-1-1s-projects\.vercel\.app$",
+]
 
 # REST Framework settings
 REST_FRAMEWORK = {
