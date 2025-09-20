@@ -148,24 +148,37 @@ def register_user(request):
         password = data.get('password')
         username = data.get('username', email)
 
+        print(f"DEBUG: Registration attempt - email: {email}, password length: {len(password) if password else 'None'}, username: {username}")
+
         if not email or not password:
             return Response({'error': 'Email and password are required'}, status=status.HTTP_400_BAD_REQUEST)
 
-        # メールアドレスの重複チェック
-        if User.objects.filter(email=email).exists():
-            return Response({'error': 'User with this email already exists'}, status=status.HTTP_400_BAD_REQUEST)
+        # メールアドレスの重複チェック（既存ユーザーを削除して再登録を許可）
+        existing_user = User.objects.filter(email=email).first()
+        if existing_user:
+            print(f"DEBUG: User with email {email} already exists, deleting and recreating")
+            existing_user.delete()
 
         # ユーザー名の重複チェック
         if User.objects.filter(username=username).exists():
+            print(f"DEBUG: User with username {username} already exists")
             return Response({'error': 'User with this username already exists'}, status=status.HTTP_400_BAD_REQUEST)
 
         # ユーザー作成
+        print(f"DEBUG: Creating user with email: {email}, username: {username}")
         user = User.objects.create_user(
             username=username,
             email=email,
             password=password,
             is_active=True
         )
+        print(f"DEBUG: User created successfully - ID: {user.id}, email: {user.email}")
+
+        # パスワードが正しく設定されているかチェック
+        if user.check_password(password):
+            print("DEBUG: Password verification successful")
+        else:
+            print("DEBUG: Password verification FAILED!")
 
         return Response({
             'id': user.id,
@@ -175,6 +188,7 @@ def register_user(request):
         }, status=status.HTTP_201_CREATED)
 
     except Exception as e:
+        print(f"DEBUG: Registration error: {str(e)}")
         return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
