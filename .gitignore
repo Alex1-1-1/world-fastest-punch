@@ -61,3 +61,4 @@ Thumbs.db
 
 # Expo app (separate repository)
 expo-app/
+.vercel
