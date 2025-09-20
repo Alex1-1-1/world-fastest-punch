@@ -160,3 +160,9 @@ if not DEBUG:
 
 # Static files storage
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+# 認証バックエンド設定（メールアドレスでログイン可能にする）
+AUTHENTICATION_BACKENDS = [
+    'submissions.backends.EmailBackend',
+    'django.contrib.auth.backends.ModelBackend',
+]
