@@ -50,6 +50,15 @@ if USE_CLOUDINARY:
         'API_SECRET': 'DgqaH1q7VRAy_OV_triKq3ZDaYI',
         'SECURE': True,  # HTTPSを強制
     }
+    
+    # CloudinaryのHTTPS設定を追加
+    import cloudinary
+    cloudinary.config(
+        cloud_name='dmg7nxl0j',
+        api_key='356488524199448',
+        api_secret='DgqaH1q7VRAy_OV_triKq3ZDaYI',
+        secure=True  # HTTPSを強制
+    )
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',

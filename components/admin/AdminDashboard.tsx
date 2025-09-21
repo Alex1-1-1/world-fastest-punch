@@ -167,13 +167,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ adminUser }) => {
         // Django APIのレスポンス形式に合わせて変換
         const submissions = submissionsData.map((item: any) => ({
           id: item.id ? item.id.toString() : 'unknown',
-          imageUrl: item.image.startsWith('http') ? item.image : `${API_BASE}${item.image}`,
-          thumbnailUrl: item.thumbnail ? 
-            (item.thumbnail.startsWith('http') ? item.thumbnail : `${API_BASE}${item.thumbnail}`) :
-            (item.image.startsWith('http') ? item.image : `${API_BASE}${item.image}`),
-          watermarkedUrl: item.watermarked_image ? 
-            (item.watermarked_image.startsWith('http') ? item.watermarked_image : `${API_BASE}${item.watermarked_image}`) :
-            (item.image.startsWith('http') ? item.image : `${API_BASE}${item.image}`),
+          imageUrl: item.image, // CloudinaryのURLは既に絶対URL
+          thumbnailUrl: item.thumbnail || item.image, // CloudinaryのURLは既に絶対URL
+          watermarkedUrl: item.watermarked_image || item.image, // CloudinaryのURLは既に絶対URL
           speed: item.judgment?.speed_kmh || null,
           comment: unquoteOnce(item.judgment?.metaphor_comment),
           description: item.description || '',
