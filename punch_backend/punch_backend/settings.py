@@ -16,6 +16,9 @@ DEBUG = os.environ.get('DEBUG', 'True').lower() == 'true'
 
 ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1,0.0.0.0').split(',')
 
+# 画像ストレージ設定
+USE_CLOUDINARY = os.environ.get("USE_CLOUDINARY", "true").lower() == "true"
+
 # Application definition
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -29,6 +32,10 @@ INSTALLED_APPS = [
     'corsheaders',
     'submissions',
 ]
+
+# Cloudinary設定（本番環境のみ）
+if USE_CLOUDINARY:
+    INSTALLED_APPS += ["cloudinary", "cloudinary_storage"]
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
@@ -105,8 +112,14 @@ STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 # Media files
-MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+if USE_CLOUDINARY:
+    # Cloudinaryを使用する場合
+    DEFAULT_FILE_STORAGE = "cloudinary_storage.storage.MediaCloudinaryStorage"
+    MEDIA_URL = "/media/"  # 任意（Cloudinaryは絶対URLを返してくれます）
+else:
+    # ローカルファイルシステムを使用する場合
+    MEDIA_URL = '/media/'
+    MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

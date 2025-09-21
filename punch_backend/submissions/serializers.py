@@ -100,47 +100,23 @@ class UserProfileSerializer(serializers.ModelSerializer):
         read_only_fields = ['role', 'created_at', 'updated_at']
     
     def get_profile_image(self, obj):
-        # Base64画像を優先
-        if obj.profile_image_base64:
-            return obj.profile_image_base64
-        
-        # ファイル画像のフォールバック
         if obj.profile_image:
-            request = self.context.get('request')
-            if request:
-                # 本番環境ではHTTPSを使用
-                base_url = request.build_absolute_uri('/')
-                if base_url.startswith('https://'):
-                    return f"https://world-fastest-punch.onrender.com{obj.profile_image.url}"
-                else:
-                    return request.build_absolute_uri(obj.profile_image.url)
-            # リクエストがない場合は絶対URLを構築
-            return f"https://world-fastest-punch.onrender.com{obj.profile_image.url}"
+            # Cloudinaryを使用している場合は絶対URLが返される
+            return obj.profile_image.url
         return None
     
     def update(self, instance, validated_data):
-        print(f"DEBUG: Serializer update - initial_data: {self.initial_data}")
-        print(f"DEBUG: Serializer update - validated_data: {validated_data}")
-        
         # プロフィール画像の処理
         if 'profile_image' in self.initial_data:
             profile_image = self.initial_data['profile_image']
-            print(f"DEBUG: Profile image found - type: {type(profile_image)}, starts with data: {isinstance(profile_image, str) and profile_image.startswith('data:') if isinstance(profile_image, str) else False}")
             if profile_image:
-                # Base64画像として保存
-                if isinstance(profile_image, str) and profile_image.startswith('data:'):
-                    print(f"DEBUG: Saving as Base64 - length: {len(profile_image)}")
-                    instance.profile_image_base64 = profile_image
-                else:
-                    print(f"DEBUG: Saving as file")
-                    instance.profile_image = profile_image
+                instance.profile_image = profile_image
         
         # その他のフィールドを更新
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
         
         instance.save()
-        print(f"DEBUG: After save - profile_image_base64: {instance.profile_image_base64}")
         return instance
 
 
