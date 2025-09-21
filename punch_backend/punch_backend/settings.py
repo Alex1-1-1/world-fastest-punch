@@ -18,24 +18,39 @@ ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1,0.0.0.0').s
 
 # 画像ストレージ設定
 USE_CLOUDINARY = os.environ.get("USE_CLOUDINARY", "true").lower() == "true"
+print(f"DEBUG: USE_CLOUDINARY = {USE_CLOUDINARY}")
+print(f"DEBUG: CLOUDINARY_URL = {os.environ.get('CLOUDINARY_URL', 'NOT_SET')}")
 
 # Application definition
-INSTALLED_APPS = [
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
-    'rest_framework',
-    'rest_framework_simplejwt',
-    'corsheaders',
-    'submissions',
-]
-
 # Cloudinary設定（本番環境のみ）
 if USE_CLOUDINARY:
-    INSTALLED_APPS += ["cloudinary", "cloudinary_storage"]
+    INSTALLED_APPS = [
+        'django.contrib.admin',
+        'django.contrib.auth',
+        'django.contrib.contenttypes',
+        'django.contrib.sessions',
+        'django.contrib.messages',
+        'django.contrib.staticfiles',
+        'cloudinary',
+        'cloudinary_storage',
+        'rest_framework',
+        'rest_framework_simplejwt',
+        'corsheaders',
+        'submissions',
+    ]
+else:
+    INSTALLED_APPS = [
+        'django.contrib.admin',
+        'django.contrib.auth',
+        'django.contrib.contenttypes',
+        'django.contrib.sessions',
+        'django.contrib.messages',
+        'django.contrib.staticfiles',
+        'rest_framework',
+        'rest_framework_simplejwt',
+        'corsheaders',
+        'submissions',
+    ]
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
@@ -116,10 +131,12 @@ if USE_CLOUDINARY:
     # Cloudinaryを使用する場合
     DEFAULT_FILE_STORAGE = "cloudinary_storage.storage.MediaCloudinaryStorage"
     MEDIA_URL = "/media/"  # 任意（Cloudinaryは絶対URLを返してくれます）
+    print("DEBUG: Using Cloudinary for media storage")
 else:
     # ローカルファイルシステムを使用する場合
     MEDIA_URL = '/media/'
     MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+    print("DEBUG: Using local filesystem for media storage")
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
