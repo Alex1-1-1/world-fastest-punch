@@ -60,6 +60,10 @@ if USE_CLOUDINARY:
         secure=True,  # HTTPSを強制
         secure_distribution='res.cloudinary.com'  # HTTPSドメインを明示的に指定
     )
+    
+    # 強制的にCloudinaryStorageを設定
+    DEFAULT_FILE_STORAGE = "cloudinary_storage.storage.MediaCloudinaryStorage"
+    print("DEBUG: Cloudinary storage set as DEFAULT_FILE_STORAGE")
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
@@ -150,6 +154,10 @@ else:
     print("DEBUG: Using local filesystem for media storage")
     print(f"DEBUG: MEDIA_URL = {MEDIA_URL}")
     print(f"DEBUG: MEDIA_ROOT = {MEDIA_ROOT}")
+
+# デバッグ用：実際の設定を確認
+print(f"DEBUG: Final DEFAULT_FILE_STORAGE = {DEFAULT_FILE_STORAGE}")
+print(f"DEBUG: Final MEDIA_URL = {MEDIA_URL}")
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

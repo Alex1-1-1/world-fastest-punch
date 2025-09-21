@@ -33,8 +33,10 @@ class SubmissionSerializer(serializers.ModelSerializer):
         print(f"DEBUG: Field name: {name}")
         
         if name:
-            # Cloudinaryでは拡張子を含む必要がある
-            # 例: "submissions/abcd1234.jpg" -> "submissions/abcd1234.jpg"
+            # 拡張子を削除してpublic_idを取得
+            # 例: "submissions/abcd1234.jpg" -> "submissions/abcd1234"
+            if '.' in name:
+                return name.rsplit('.', 1)[0]
             return name
         return None
 
