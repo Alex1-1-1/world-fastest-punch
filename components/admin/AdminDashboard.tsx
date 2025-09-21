@@ -581,7 +581,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ adminUser }) => {
                           className="w-24 h-24 object-cover rounded"
                           onError={(e) => {
                             console.error('画像読み込みエラー:', submission.thumbnailUrl);
-                            e.currentTarget.src = '/placeholder-image.png';
+                            e.currentTarget.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgZmlsbD0iI2Y3ZjdmNyIvPjx0ZXh0IHg9IjUwIiB5PSI1MCIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE0IiBmaWxsPSIjOTk5IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+画像なし</text></svg>';
                           }}
                         />
                         <div className="flex-1">
