@@ -25,20 +25,26 @@ class SubmissionSerializer(serializers.ModelSerializer):
 
     def _public_id(self, fieldfile):
         """CloudinaryFieldからpublic_idを取得"""
-        if not fieldfile:
+        try:
+            if not fieldfile:
+                return None
+            
+            # CloudinaryFieldの場合、nameからpublic_idを取得
+            name = getattr(fieldfile, "name", "")
+            print(f"DEBUG: Field name: {name}")
+            
+            if name:
+                # 拡張子を削除してpublic_idを取得
+                # 例: "submissions/abcd1234.jpg" -> "submissions/abcd1234"
+                if '.' in name:
+                    return name.rsplit('.', 1)[0]
+                return name
             return None
-        
-        # CloudinaryFieldの場合、nameからpublic_idを取得
-        name = getattr(fieldfile, "name", "")
-        print(f"DEBUG: Field name: {name}")
-        
-        if name:
-            # 拡張子を削除してpublic_idを取得
-            # 例: "submissions/abcd1234.jpg" -> "submissions/abcd1234"
-            if '.' in name:
-                return name.rsplit('.', 1)[0]
-            return name
-        return None
+        except Exception as e:
+            print(f"DEBUG: Public ID extraction error: {e}")
+            import traceback
+            traceback.print_exc()
+            return None
 
     def get_image(self, obj):
         if not obj.image:
@@ -53,46 +59,59 @@ class SubmissionSerializer(serializers.ModelSerializer):
         return url
 
     def get_thumbnail(self, obj):
-        if not obj.image:
+        try:
+            if not obj.image:
+                return None
+            
+            if settings.USE_CLOUDINARY:
+                # Cloudinaryの動的サムネイル生成
+                public_id = self._public_id(obj.image)
+                print(f"DEBUG: Thumbnail public_id: {public_id}")
+                if public_id:
+                    url, _ = cloudinary_url(
+                        public_id,
+                        secure=True,
+                        transformation=[{
+                            "width": 600, 
+                            "height": 600, 
+                            "crop": "fill", 
+                            "gravity": "auto"
+                        }],
+                        format="jpg",
+                    )
+                    print(f"DEBUG: Cloudinary thumbnail URL: {url}")
+                    return url
+            else:
+                # ローカルファイルの場合
+                if obj.thumbnail:
+                    url = obj.thumbnail.url
+                    print(f"DEBUG: Local thumbnail URL: {url}")
+                    return url
+                elif obj.image:
+                    url = obj.image.url
+                    print(f"DEBUG: Using main image as thumbnail: {url}")
+                    return url
             return None
-        
-        if settings.USE_CLOUDINARY:
-            # Cloudinaryの動的サムネイル生成
-            public_id = self._public_id(obj.image)
-            if public_id:
-                url, _ = cloudinary_url(
-                    public_id,
-                    secure=True,
-                    transformation=[{
-                        "width": 600, 
-                        "height": 600, 
-                        "crop": "fill", 
-                        "gravity": "auto"
-                    }],
-                    format="jpg",
-                )
-                print(f"DEBUG: Cloudinary thumbnail URL: {url}")
-                return url
-        else:
-            # ローカルファイルの場合
-            if obj.thumbnail:
-                url = obj.thumbnail.url
-                print(f"DEBUG: Local thumbnail URL: {url}")
-                return url
-            elif obj.image:
-                url = obj.image.url
-                print(f"DEBUG: Using main image as thumbnail: {url}")
-                return url
-        return None
+        except Exception as e:
+            print(f"DEBUG: Thumbnail generation error: {e}")
+            import traceback
+            traceback.print_exc()
+            return None
 
     def get_watermarked_image(self, obj):
-        if not obj.image:
+        try:
+            if not obj.image:
+                return None
+            
+            # 透かし画像は元画像と同じURLを返す（透かしは後で実装）
+            url = obj.image.url
+            print(f"DEBUG: Watermarked image URL: {url}")
+            return url
+        except Exception as e:
+            print(f"DEBUG: Watermarked image generation error: {e}")
+            import traceback
+            traceback.print_exc()
             return None
-        
-        # 透かし画像は元画像と同じURLを返す（透かしは後で実装）
-        url = obj.image.url
-        print(f"DEBUG: Watermarked image URL: {url}")
-        return url
 
     def get_judgment(self, obj):
         if hasattr(obj, 'judgment') and obj.judgment:
