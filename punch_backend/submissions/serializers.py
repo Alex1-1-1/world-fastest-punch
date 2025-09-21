@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from .models import Submission, Judgment, Ranking, Report, UserProfile, Notification
 from django.conf import settings
+from django.core.exceptions import ObjectDoesNotExist
 
 # Cloudinary用のインポート
 if settings.USE_CLOUDINARY:
@@ -47,16 +48,22 @@ class SubmissionSerializer(serializers.ModelSerializer):
             return None
 
     def get_image(self, obj):
-        if not obj.image:
-            print("DEBUG: No image found")
+        try:
+            if not obj.image:
+                print("DEBUG: No image found")
+                return None
+            
+            # シンプルにURLを返す（Cloudinaryが自動的にHTTPS URLを生成）
+            url = obj.image.url
+            print(f"DEBUG: Image URL: {url}")
+            print(f"DEBUG: Image name: {obj.image.name}")
+            print(f"DEBUG: Image storage: {obj.image.storage}")
+            return url
+        except Exception as e:
+            print(f"DEBUG: Image URL generation error: {e}")
+            import traceback
+            traceback.print_exc()
             return None
-        
-        # シンプルにURLを返す（Cloudinaryが自動的にHTTPS URLを生成）
-        url = obj.image.url
-        print(f"DEBUG: Image URL: {url}")
-        print(f"DEBUG: Image name: {obj.image.name}")
-        print(f"DEBUG: Image storage: {obj.image.storage}")
-        return url
 
     def get_thumbnail(self, obj):
         try:
@@ -114,9 +121,12 @@ class SubmissionSerializer(serializers.ModelSerializer):
             return None
 
     def get_judgment(self, obj):
-        if hasattr(obj, 'judgment') and obj.judgment:
-            return JudgmentSerializer(obj.judgment).data
-        return None
+        try:
+            judgment = obj.judgment  # ここで存在しないと例外が出る
+        except ObjectDoesNotExist:
+            return None
+        # 存在する場合のみシリアライズ
+        return JudgmentSerializer(judgment).data
 
 
 class JudgmentSerializer(serializers.ModelSerializer):
