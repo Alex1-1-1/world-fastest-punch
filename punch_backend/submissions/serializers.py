@@ -24,101 +24,28 @@ class SubmissionSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['id', 'created_at', 'updated_at']
 
-    def _public_id(self, fieldfile):
-        """CloudinaryFieldからpublic_idを取得"""
+    def _safe_url(self, f):
+        """CloudinaryResource/File から安全に URL を取り出す"""
+        if not f:
+            return None
         try:
-            if not fieldfile:
-                return None
-            
-            # CloudinaryFieldの場合、nameからpublic_idを取得
-            name = getattr(fieldfile, "name", "")
-            print(f"DEBUG: Field name: {name}")
-            
-            if name:
-                # 拡張子を削除してpublic_idを取得
-                # 例: "submissions/abcd1234.jpg" -> "submissions/abcd1234"
-                if '.' in name:
-                    return name.rsplit('.', 1)[0]
-                return name
+            url = f.url       # Cloudinary も Django File もここが最も互換性が高い
+        except Exception:
             return None
-        except Exception as e:
-            print(f"DEBUG: Public ID extraction error: {e}")
-            import traceback
-            traceback.print_exc()
-            return None
+        # Cloudinary は絶対URL、ローカルは /media/... の相対URL
+        if url and url.startswith('http'):
+            return url
+        req = self.context.get('request')
+        return req.build_absolute_uri(url) if (req and url) else url
 
     def get_image(self, obj):
-        try:
-            if not obj.image:
-                print("DEBUG: No image found")
-                return None
-            
-            # シンプルにURLを返す（Cloudinaryが自動的にHTTPS URLを生成）
-            url = obj.image.url
-            print(f"DEBUG: Image URL: {url}")
-            print(f"DEBUG: Image name: {obj.image.name}")
-            print(f"DEBUG: Image storage: {obj.image.storage}")
-            return url
-        except Exception as e:
-            print(f"DEBUG: Image URL generation error: {e}")
-            import traceback
-            traceback.print_exc()
-            return None
+        return self._safe_url(obj.image)
 
     def get_thumbnail(self, obj):
-        try:
-            if not obj.image:
-                return None
-            
-            if settings.USE_CLOUDINARY:
-                # Cloudinaryの動的サムネイル生成
-                public_id = self._public_id(obj.image)
-                print(f"DEBUG: Thumbnail public_id: {public_id}")
-                if public_id:
-                    url, _ = cloudinary_url(
-                        public_id,
-                        secure=True,
-                        transformation=[{
-                            "width": 600, 
-                            "height": 600, 
-                            "crop": "fill", 
-                            "gravity": "auto"
-                        }],
-                        format="jpg",
-                    )
-                    print(f"DEBUG: Cloudinary thumbnail URL: {url}")
-                    return url
-            else:
-                # ローカルファイルの場合
-                if obj.thumbnail:
-                    url = obj.thumbnail.url
-                    print(f"DEBUG: Local thumbnail URL: {url}")
-                    return url
-                elif obj.image:
-                    url = obj.image.url
-                    print(f"DEBUG: Using main image as thumbnail: {url}")
-                    return url
-            return None
-        except Exception as e:
-            print(f"DEBUG: Thumbnail generation error: {e}")
-            import traceback
-            traceback.print_exc()
-            return None
+        return self._safe_url(obj.thumbnail)
 
     def get_watermarked_image(self, obj):
-        try:
-            if not obj.image:
-                return None
-            
-            # 透かし画像は元画像と同じURLを返す（透かしは後で実装）
-            url = obj.image.url
-            print(f"DEBUG: Watermarked image URL: {url}")
-            return url
-        except Exception as e:
-            print(f"DEBUG: Watermarked image generation error: {e}")
-            import traceback
-            traceback.print_exc()
-            return None
+        return self._safe_url(obj.watermarked_image)
 
     def get_judgment(self, obj):
         try:
@@ -216,6 +143,10 @@ class SubmissionCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Submission
         fields = ['image', 'description']
+    
+    def to_representation(self, instance):
+        """作成後に完全なデータを返す"""
+        return SubmissionSerializer(instance, context=self.context).data
     
     def validate_image(self, value):
         # 画像サイズのバリデーション
