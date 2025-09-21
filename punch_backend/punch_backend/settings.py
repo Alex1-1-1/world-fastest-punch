@@ -20,6 +20,7 @@ ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1,0.0.0.0').s
 USE_CLOUDINARY = bool(os.environ.get("CLOUDINARY_URL"))
 print(f"DEBUG: USE_CLOUDINARY = {USE_CLOUDINARY}")
 print(f"DEBUG: CLOUDINARY_URL = {os.environ.get('CLOUDINARY_URL', 'NOT_SET')}")
+print(f"DEBUG: All environment variables: {dict(os.environ)}")
 
 # Application definition
 INSTALLED_APPS = [
@@ -122,11 +123,15 @@ if USE_CLOUDINARY:
     DEFAULT_FILE_STORAGE = "cloudinary_storage.storage.MediaCloudinaryStorage"
     MEDIA_URL = "/media/"  # 任意（Cloudinaryは絶対URLを返してくれます）
     print("DEBUG: Using Cloudinary for media storage")
+    print(f"DEBUG: DEFAULT_FILE_STORAGE = {DEFAULT_FILE_STORAGE}")
+    print(f"DEBUG: MEDIA_URL = {MEDIA_URL}")
 else:
     # ローカルファイルシステムを使用する場合
     MEDIA_URL = '/media/'
     MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
     print("DEBUG: Using local filesystem for media storage")
+    print(f"DEBUG: MEDIA_URL = {MEDIA_URL}")
+    print(f"DEBUG: MEDIA_ROOT = {MEDIA_ROOT}")
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
