@@ -96,7 +96,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = UserProfile
-        fields = ['profile_image', 'profile_image_base64', 'bio', 'role', 'created_at', 'updated_at']
+        fields = ['profile_image', 'bio', 'role', 'created_at', 'updated_at']
         read_only_fields = ['role', 'created_at', 'updated_at']
     
     def get_profile_image(self, obj):

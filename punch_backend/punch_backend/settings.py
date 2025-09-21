@@ -17,7 +17,7 @@ DEBUG = os.environ.get('DEBUG', 'True').lower() == 'true'
 ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1,0.0.0.0').split(',')
 
 # 画像ストレージ設定
-USE_CLOUDINARY = os.environ.get("USE_CLOUDINARY", "true").lower() == "true"
+USE_CLOUDINARY = os.environ.get("USE_CLOUDINARY", "false").lower() == "true"
 print(f"DEBUG: USE_CLOUDINARY = {USE_CLOUDINARY}")
 print(f"DEBUG: CLOUDINARY_URL = {os.environ.get('CLOUDINARY_URL', 'NOT_SET')}")
 

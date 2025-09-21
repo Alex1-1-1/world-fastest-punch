@@ -13,7 +13,6 @@ class UserProfile(models.Model):
     
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
     profile_image = models.ImageField(upload_to='profiles/', blank=True, null=True)
-    profile_image_base64 = models.TextField(blank=True, null=True, help_text="Base64エンコードされたプロフィール画像")
     bio = models.TextField(max_length=500, blank=True, help_text="自己紹介")
     role = models.CharField(max_length=10, choices=ROLE_CHOICES, default='USER', help_text="ユーザー権限")
     created_at = models.DateTimeField(auto_now_add=True)
