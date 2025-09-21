@@ -102,21 +102,30 @@ class UserProfileSerializer(serializers.ModelSerializer):
     def get_profile_image(self, obj):
         if obj.profile_image:
             # Cloudinaryを使用している場合は絶対URLが返される
-            return obj.profile_image.url
+            url = obj.profile_image.url
+            print(f"DEBUG: Profile image URL: {url}")
+            return url
+        print("DEBUG: No profile image found")
         return None
     
     def update(self, instance, validated_data):
+        print(f"DEBUG: Serializer update - initial_data keys: {list(self.initial_data.keys())}")
+        
         # プロフィール画像の処理
         if 'profile_image' in self.initial_data:
             profile_image = self.initial_data['profile_image']
+            print(f"DEBUG: Profile image received - type: {type(profile_image)}")
             if profile_image:
+                print(f"DEBUG: Setting profile image: {profile_image}")
                 instance.profile_image = profile_image
+                print(f"DEBUG: After setting - instance.profile_image: {instance.profile_image}")
         
         # その他のフィールドを更新
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
         
         instance.save()
+        print(f"DEBUG: After save - profile_image URL: {instance.profile_image.url if instance.profile_image else 'None'}")
         return instance
 
 
