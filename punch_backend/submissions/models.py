@@ -1,6 +1,14 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.core.validators import MinValueValidator, MaxValueValidator
+import os
+
+# CloudinaryFieldの条件付きインポート
+if os.environ.get('CLOUDINARY_URL'):
+    from cloudinary.models import CloudinaryField
+    CLOUDINARY_AVAILABLE = True
+else:
+    CLOUDINARY_AVAILABLE = False
 
 
 class UserProfile(models.Model):
@@ -12,7 +20,7 @@ class UserProfile(models.Model):
     ]
     
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
-    profile_image = models.ImageField(upload_to='profiles/', blank=True, null=True)
+    profile_image = models.ImageField(upload_to='profiles/', blank=True, null=True) if not CLOUDINARY_AVAILABLE else CloudinaryField('image', folder='profiles', blank=True, null=True)
     bio = models.TextField(max_length=500, blank=True, help_text="自己紹介")
     role = models.CharField(max_length=10, choices=ROLE_CHOICES, default='USER', help_text="ユーザー権限")
     created_at = models.DateTimeField(auto_now_add=True)

@@ -101,11 +101,9 @@ class UserProfileSerializer(serializers.ModelSerializer):
     
     def get_profile_image(self, obj):
         if obj.profile_image:
-            # Cloudinaryを使用している場合は絶対URLが返される
+            # CloudinaryFieldは自動的に絶対URLを返す
             url = obj.profile_image.url
-            print(f"DEBUG: Profile image URL: {url}")
-            print(f"DEBUG: Profile image name: {obj.profile_image.name}")
-            print(f"DEBUG: Profile image storage: {obj.profile_image.storage}")
+            print(f"DEBUG: Cloudinary image URL: {url}")
             return url
         print("DEBUG: No profile image found")
         return None
