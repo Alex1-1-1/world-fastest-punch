@@ -123,6 +123,7 @@ const WebApp: React.FC = () => {
           const response = await fetch(profileData.profileImage);
           const blob = await response.blob();
           formData.append('profile_image', blob, 'profile.jpg');
+          console.log('画像をFormDataで送信:', blob.type, blob.size);
         } catch (imageError) {
           console.error('画像変換エラー:', imageError);
           // 画像変換に失敗した場合はスキップ

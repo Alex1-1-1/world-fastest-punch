@@ -42,6 +42,14 @@ if USE_CLOUDINARY:
         'cloudinary',
         'cloudinary_storage',
     ]
+    
+    # Cloudinary設定
+    CLOUDINARY_STORAGE = {
+        'CLOUD_NAME': 'dmg7nxl0j',
+        'API_KEY': '356488524199448',
+        'API_SECRET': 'DgqaH1q7VRAy_OV_triKq3ZDaYI',
+        'SECURE': True,  # HTTPSを強制
+    }
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
