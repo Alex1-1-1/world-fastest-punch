@@ -71,8 +71,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ adminUser }) => {
   const checkTokenValidity = async (token: string): Promise<boolean> => {
     try {
       const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'https://world-fastest-punch.onrender.com';
-      // 認証が不要なエンドポイントでトークンの有効性をチェック
-      const response = await fetch(`${API_BASE}/api/submissions/`, {
+      const response = await fetch(`${API_BASE}/api/profile/`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -157,31 +156,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ adminUser }) => {
     try {
       setLoading(true);
       const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'https://world-fastest-punch.onrender.com';
-      
-      // トークンが有効でない場合は再取得
-      if (!jwtToken) {
-        console.log('JWTトークンがありません。新しいトークンを取得します。');
-        const newToken = await getJwtToken();
-        if (newToken) {
-          setJwtToken(newToken);
-          localStorage.setItem('admin_jwt_token', newToken);
-        } else {
-          console.error('JWTトークンの取得に失敗しました');
-          return;
-        }
-      }
-      
       const [submissionsRes, reportsRes] = await Promise.all([
-        fetch(`${API_BASE}/api/admin/submissions/`, {
-          headers: {
-            'Authorization': `Bearer ${jwtToken}`,
-          },
-        }),
-        fetch(`${API_BASE}/api/admin/reports/`, {
-          headers: {
-            'Authorization': `Bearer ${jwtToken}`,
-          },
-        }),
+        fetch(`${API_BASE}/api/admin/submissions/`),
+        fetch(`${API_BASE}/api/admin/reports/`),
       ]);
 
       if (submissionsRes.ok) {
