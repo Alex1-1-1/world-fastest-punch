@@ -142,10 +142,8 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 # Media files
 if USE_CLOUDINARY:
     # Cloudinaryを使用する場合
-    DEFAULT_FILE_STORAGE = "cloudinary_storage.storage.MediaCloudinaryStorage"
     MEDIA_URL = "/media/"  # 任意（Cloudinaryは絶対URLを返してくれます）
     print("DEBUG: Using Cloudinary for media storage")
-    print(f"DEBUG: DEFAULT_FILE_STORAGE = {DEFAULT_FILE_STORAGE}")
     print(f"DEBUG: MEDIA_URL = {MEDIA_URL}")
 else:
     # ローカルファイルシステムを使用する場合
@@ -220,3 +218,10 @@ AUTHENTICATION_BACKENDS = [
     'submissions.backends.EmailBackend',
     'django.contrib.auth.backends.ModelBackend',
 ]
+
+# 最終的なDEFAULT_FILE_STORAGE設定（Cloudinary環境の場合）
+if USE_CLOUDINARY:
+    DEFAULT_FILE_STORAGE = "cloudinary_storage.storage.MediaCloudinaryStorage"
+    print("DEBUG: Final DEFAULT_FILE_STORAGE set to CloudinaryStorage")
+else:
+    print("DEBUG: Using default FileSystemStorage")

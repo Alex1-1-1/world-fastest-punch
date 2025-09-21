@@ -36,9 +36,9 @@ class UserProfile(models.Model):
 class Submission(models.Model):
     """パンチの投稿モデル"""
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='submissions')
-    image = models.ImageField(upload_to='submissions/')
-    thumbnail = models.ImageField(upload_to='thumbnails/', blank=True, null=True)
-    watermarked_image = models.ImageField(upload_to='watermarked/', blank=True, null=True)
+    image = models.ImageField(upload_to='submissions/') if not CLOUDINARY_AVAILABLE else CloudinaryField('image', folder='submissions')
+    thumbnail = models.ImageField(upload_to='thumbnails/', blank=True, null=True) if not CLOUDINARY_AVAILABLE else CloudinaryField('image', folder='thumbnails', blank=True, null=True)
+    watermarked_image = models.ImageField(upload_to='watermarked/', blank=True, null=True) if not CLOUDINARY_AVAILABLE else CloudinaryField('image', folder='watermarked', blank=True, null=True)
     description = models.TextField(max_length=500, blank=True, help_text="投稿の説明文")
     is_judged = models.BooleanField(default=False)
     is_rejected = models.BooleanField(default=False, help_text="却下されたかどうか")
