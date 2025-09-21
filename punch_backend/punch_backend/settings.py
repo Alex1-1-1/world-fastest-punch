@@ -156,7 +156,10 @@ else:
     print(f"DEBUG: MEDIA_ROOT = {MEDIA_ROOT}")
 
 # デバッグ用：実際の設定を確認
-print(f"DEBUG: Final DEFAULT_FILE_STORAGE = {DEFAULT_FILE_STORAGE}")
+if 'DEFAULT_FILE_STORAGE' in locals():
+    print(f"DEBUG: Final DEFAULT_FILE_STORAGE = {DEFAULT_FILE_STORAGE}")
+else:
+    print("DEBUG: DEFAULT_FILE_STORAGE not defined")
 print(f"DEBUG: Final MEDIA_URL = {MEDIA_URL}")
 
 # Default primary key field type
