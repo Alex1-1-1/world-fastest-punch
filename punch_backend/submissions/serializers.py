@@ -20,26 +20,36 @@ class SubmissionSerializer(serializers.ModelSerializer):
 
     def get_image(self, obj):
         if obj.image:
-            request = self.context.get('request')
-            if request:
-                return request.build_absolute_uri(obj.image.url)
-            return obj.image.url
+            # CloudinaryのURLは既に絶対URL
+            url = obj.image.url
+            print(f"DEBUG: Submission image URL: {url}")
+            return url
         return None
 
     def get_thumbnail(self, obj):
         if obj.thumbnail:
-            request = self.context.get('request')
-            if request:
-                return request.build_absolute_uri(obj.thumbnail.url)
-            return obj.thumbnail.url
+            # CloudinaryのURLは既に絶対URL
+            url = obj.thumbnail.url
+            print(f"DEBUG: Submission thumbnail URL: {url}")
+            return url
+        elif obj.image:
+            # サムネイルがない場合は元画像を使用
+            url = obj.image.url
+            print(f"DEBUG: Using main image as thumbnail: {url}")
+            return url
         return None
 
     def get_watermarked_image(self, obj):
         if obj.watermarked_image:
-            request = self.context.get('request')
-            if request:
-                return request.build_absolute_uri(obj.watermarked_image.url)
-            return obj.watermarked_image.url
+            # CloudinaryのURLは既に絶対URL
+            url = obj.watermarked_image.url
+            print(f"DEBUG: Submission watermarked image URL: {url}")
+            return url
+        elif obj.image:
+            # 透かし画像がない場合は元画像を使用
+            url = obj.image.url
+            print(f"DEBUG: Using main image as watermarked: {url}")
+            return url
         return None
 
     def get_judgment(self, obj):

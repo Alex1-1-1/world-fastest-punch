@@ -57,7 +57,8 @@ if USE_CLOUDINARY:
         cloud_name='dmg7nxl0j',
         api_key='356488524199448',
         api_secret='DgqaH1q7VRAy_OV_triKq3ZDaYI',
-        secure=True  # HTTPSを強制
+        secure=True,  # HTTPSを強制
+        secure_distribution='res.cloudinary.com'  # HTTPSドメインを明示的に指定
     )
 
 MIDDLEWARE = [
