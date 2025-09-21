@@ -700,6 +700,13 @@ def user_profile(request):
                         user.save()
                         print(f"DEBUG: Email updated successfully")
                 
+                # 既存のプロフィール画像をクリア（Cloudinary移行のため）
+                if profile.profile_image:
+                    print(f"DEBUG: Clearing existing profile image: {profile.profile_image}")
+                    profile.profile_image.delete()
+                    profile.profile_image = None
+                    profile.save()
+                
                 # プロフィール情報の更新
                 print(f"DEBUG: Updating profile with data: {request.data}")
                 serializer = UserProfileSerializer(profile, data=request.data, context={'request': request})
