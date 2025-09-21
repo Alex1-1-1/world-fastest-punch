@@ -316,10 +316,13 @@ class SubmissionListCreateView(generics.ListCreateAPIView):
             print(f"DEBUG: ユーザー取得/作成 - user: {user.username}, created: {created}")
             serializer.save(user=user)
         
-        # サムネイルと透かし画像の生成
+        # サムネイルと透かし画像の生成（Cloudinary環境ではスキップ）
         submission = serializer.instance
-        self._generate_thumbnail(submission)
-        self._generate_watermark(submission)
+        if not settings.USE_CLOUDINARY:
+            self._generate_thumbnail(submission)
+            self._generate_watermark(submission)
+        else:
+            print("DEBUG: Cloudinary環境のため、ローカル画像処理をスキップ")
     
     def create(self, request, *args, **kwargs):
         """投稿作成後のレスポンスをカスタマイズ"""

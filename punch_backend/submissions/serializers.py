@@ -1,5 +1,10 @@
 from rest_framework import serializers
 from .models import Submission, Judgment, Ranking, Report, UserProfile, Notification
+from django.conf import settings
+
+# Cloudinary用のインポート
+if settings.USE_CLOUDINARY:
+    from cloudinary.utils import cloudinary_url
 
 
 class SubmissionSerializer(serializers.ModelSerializer):
@@ -18,38 +23,105 @@ class SubmissionSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['id', 'created_at', 'updated_at']
 
+    def _public_id(self, fieldfile):
+        """CloudinaryFieldからpublic_idを取得"""
+        if not fieldfile:
+            return None
+        # CloudinaryFieldの場合、nameからpublic_idを推測
+        # 例: "submissions/abcd1234.jpg" -> "submissions/abcd1234"
+        name = getattr(fieldfile, "name", "")
+        if name:
+            return name.rsplit(".", 1)[0]
+        return None
+
     def get_image(self, obj):
-        if obj.image:
-            # CloudinaryのURLは既に絶対URL
+        if not obj.image:
+            return None
+        
+        if settings.USE_CLOUDINARY:
+            # Cloudinaryの動的URL生成
+            public_id = self._public_id(obj.image)
+            if public_id:
+                url, _ = cloudinary_url(public_id, secure=True)
+                print(f"DEBUG: Cloudinary image URL: {url}")
+                return url
+        else:
+            # ローカルファイルの場合
             url = obj.image.url
-            print(f"DEBUG: Submission image URL: {url}")
+            print(f"DEBUG: Local image URL: {url}")
             return url
         return None
 
     def get_thumbnail(self, obj):
-        if obj.thumbnail:
-            # CloudinaryのURLは既に絶対URL
-            url = obj.thumbnail.url
-            print(f"DEBUG: Submission thumbnail URL: {url}")
-            return url
-        elif obj.image:
-            # サムネイルがない場合は元画像を使用
-            url = obj.image.url
-            print(f"DEBUG: Using main image as thumbnail: {url}")
-            return url
+        if not obj.image:
+            return None
+        
+        if settings.USE_CLOUDINARY:
+            # Cloudinaryの動的サムネイル生成
+            public_id = self._public_id(obj.image)
+            if public_id:
+                url, _ = cloudinary_url(
+                    public_id,
+                    secure=True,
+                    transformation=[{
+                        "width": 600, 
+                        "height": 600, 
+                        "crop": "fill", 
+                        "gravity": "auto"
+                    }],
+                    format="jpg",
+                )
+                print(f"DEBUG: Cloudinary thumbnail URL: {url}")
+                return url
+        else:
+            # ローカルファイルの場合
+            if obj.thumbnail:
+                url = obj.thumbnail.url
+                print(f"DEBUG: Local thumbnail URL: {url}")
+                return url
+            elif obj.image:
+                url = obj.image.url
+                print(f"DEBUG: Using main image as thumbnail: {url}")
+                return url
         return None
 
     def get_watermarked_image(self, obj):
-        if obj.watermarked_image:
-            # CloudinaryのURLは既に絶対URL
-            url = obj.watermarked_image.url
-            print(f"DEBUG: Submission watermarked image URL: {url}")
-            return url
-        elif obj.image:
-            # 透かし画像がない場合は元画像を使用
-            url = obj.image.url
-            print(f"DEBUG: Using main image as watermarked: {url}")
-            return url
+        if not obj.image:
+            return None
+        
+        if settings.USE_CLOUDINARY:
+            # Cloudinaryの動的透かし画像生成
+            public_id = self._public_id(obj.image)
+            if public_id:
+                url, _ = cloudinary_url(
+                    public_id,
+                    secure=True,
+                    transformation=[
+                        {"quality": "auto", "fetch_format": "auto"},
+                        # 透かしロゴ（例：右下に配置）
+                        {
+                            "overlay": "watermark_logo",  # Cloudinaryにアップロードした透かしロゴ名
+                            "gravity": "south_east", 
+                            "x": 20, 
+                            "y": 20, 
+                            "opacity": 60, 
+                            "width": 120
+                        }
+                    ],
+                    format="jpg",
+                )
+                print(f"DEBUG: Cloudinary watermarked URL: {url}")
+                return url
+        else:
+            # ローカルファイルの場合
+            if obj.watermarked_image:
+                url = obj.watermarked_image.url
+                print(f"DEBUG: Local watermarked URL: {url}")
+                return url
+            elif obj.image:
+                url = obj.image.url
+                print(f"DEBUG: Using main image as watermarked: {url}")
+                return url
         return None
 
     def get_judgment(self, obj):
