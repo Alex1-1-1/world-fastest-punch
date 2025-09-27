@@ -34,6 +34,7 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'corsheaders',
     'submissions',
+    'punch_backend.auth',  # 新しく追加したauthアプリ
 ]
 
 # Cloudinary設定（本番環境のみ）

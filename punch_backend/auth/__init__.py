@@ -1,0 +1,1 @@
+# Django auth app for mobile JWT authentication
