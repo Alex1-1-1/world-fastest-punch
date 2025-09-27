@@ -56,19 +56,20 @@ class APIService: ObservableObject {
         
         let loginRequest = LoginRequest(email: email, password: password)
         
-        return performRequest(
-            endpoint: "/api/auth/jwt/login/",
-            method: "POST",
-            body: loginRequest,
-            responseType: AuthResponse.self
-        )
-        .handleEvents(receiveOutput: { [weak self] response in
-            self?.authToken = response.access
-            self?.currentUser = response.user
-            self?.isAuthenticated = true
-            self?.saveAuthToken(response.access)
-        })
-        .eraseToAnyPublisher()
+            return performRequest(
+                endpoint: "/api/auth/jwt/login/",
+                method: "POST",
+                body: loginRequest,
+                responseType: AuthResponse.self
+            )
+            .receive(on: DispatchQueue.main)
+            .handleEvents(receiveOutput: { [weak self] response in
+                self?.authToken = response.access
+                self?.currentUser = response.user
+                self?.isAuthenticated = true
+                self?.saveAuthToken(response.access)
+            })
+            .eraseToAnyPublisher()
     }
     
     func register(email: String, password: String, username: String) -> AnyPublisher<AuthResponse, Error> {
@@ -110,19 +111,20 @@ class APIService: ObservableObject {
         
         let registerRequest = RegisterRequest(email: email, password: password, username: username)
         
-        return performRequest(
-            endpoint: "/api/auth/jwt/register/",
-            method: "POST",
-            body: registerRequest,
-            responseType: AuthResponse.self
-        )
-        .handleEvents(receiveOutput: { [weak self] response in
-            self?.authToken = response.access
-            self?.currentUser = response.user
-            self?.isAuthenticated = true
-            self?.saveAuthToken(response.access)
-        })
-        .eraseToAnyPublisher()
+            return performRequest(
+                endpoint: "/api/auth/jwt/register/",
+                method: "POST",
+                body: registerRequest,
+                responseType: AuthResponse.self
+            )
+            .receive(on: DispatchQueue.main)
+            .handleEvents(receiveOutput: { [weak self] response in
+                self?.authToken = response.access
+                self?.currentUser = response.user
+                self?.isAuthenticated = true
+                self?.saveAuthToken(response.access)
+            })
+            .eraseToAnyPublisher()
     }
     
     func logout() {

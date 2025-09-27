@@ -9,7 +9,7 @@ struct Submission: Codable, Identifiable {
     let watermarkedImage: String?
     let description: String
     let isJudged: Bool
-    let isRejected: Bool
+    let isRejected: Bool?  // Optional に変更
     let createdAt: String
     let judgment: Judgment?
     
@@ -39,7 +39,7 @@ struct Submission: Codable, Identifiable {
     
     // ステータスを取得
     var status: SubmissionStatus {
-        if isRejected { return .rejected }
+        if isRejected == true { return .rejected }
         if isJudged { return .approved }
         return .pending
     }

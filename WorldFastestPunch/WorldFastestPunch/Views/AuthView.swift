@@ -18,7 +18,7 @@ struct AuthView: View {
                     // ヘッダー
                     VStack(spacing: 16) {
                         // ロゴ
-                        Image(systemName: "fist.raised.fill")
+                        Image(systemName: "hand.raised.fist.fill")
                             .font(.system(size: 60))
                             .foregroundColor(.orange)
                         
