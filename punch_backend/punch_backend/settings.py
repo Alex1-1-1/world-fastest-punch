@@ -34,7 +34,7 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'corsheaders',
     'submissions',
-    'auth',  # 新しく追加したauthアプリ
+    'mobile_auth',  # 新しく追加したmobile_authアプリ
 ]
 
 # Cloudinary設定（本番環境のみ）
