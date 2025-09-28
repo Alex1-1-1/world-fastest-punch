@@ -65,7 +65,7 @@ export default function GameHomePage() {
               </div>
               <div>
                 <h3 className="text-xl font-bold text-gray-800 mb-2">1. パンチを記録</h3>
-                <p className="text-gray-600">カメラでパンチの瞬間を撮影して投稿</p>
+                <p className="text-gray-600">カメラでパンチのイラストを撮影して投稿</p>
               </div>
             </div>
             <div className="flex items-start space-x-4">

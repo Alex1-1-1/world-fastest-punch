@@ -684,7 +684,7 @@ const WebApp: React.FC = () => {
           <CardHeader>
             <CardTitle className="text-center text-2xl text-orange-500">パンチ画像を投稿</CardTitle>
             <p className="text-center text-gray-600">
-              あなたのパンチの瞬間を投稿して、世界一速いパンチを競いましょう！
+              あなたのパンチのイラストを投稿して、世界一速いパンチを競いましょう！
             </p>
           </CardHeader>
           <CardContent className="space-y-6">

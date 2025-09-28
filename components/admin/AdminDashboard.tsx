@@ -778,7 +778,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ adminUser }) => {
                       <SelectContent>
                         <SelectItem value="不適切な内容">不適切な内容</SelectItem>
                         <SelectItem value="画像が不鮮明">画像が不鮮明</SelectItem>
-                        <SelectItem value="パンチの瞬間が捉えられていない">パンチの瞬間が捉えられていない</SelectItem>
+                        <SelectItem value="パンチのイラストが捉えられていない">パンチのイラストが捉えられていない</SelectItem>
                         <SelectItem value="画像サイズが適切でない">画像サイズが適切でない</SelectItem>
                         <SelectItem value="その他">その他</SelectItem>
                       </SelectContent>

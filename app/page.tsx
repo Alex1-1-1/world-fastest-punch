@@ -37,7 +37,7 @@ export default function HomePage() {
             <span className="text-orange-500">競い合おう</span>
           </h2>
           <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
-            世界一速いパンチアプリで、あなたのパンチの瞬間を投稿し、
+            世界一速いパンチアプリで、あなたのパンチのイラストを投稿し、
             他のユーザーと速さを競い合いましょう！
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -63,7 +63,7 @@ export default function HomePage() {
             </CardHeader>
             <CardContent>
               <CardDescription className="text-center">
-                あなたのパンチの瞬間を写真で撮影して投稿できます
+                あなたのパンチのイラストを写真で撮影して投稿できます
               </CardDescription>
             </CardContent>
           </Card>
@@ -112,7 +112,7 @@ export default function HomePage() {
             <div>
               <h4 className="text-xl font-semibold mb-4">📱 モバイルアプリ</h4>
               <p className="text-gray-600 mb-6">
-                iOSアプリで簡単にパンチの瞬間を撮影・投稿できます。
+                iOSアプリで簡単にパンチのイラストを撮影・投稿できます。
                 直感的なUIで誰でも簡単に使用できます。
               </p>
             </div>
