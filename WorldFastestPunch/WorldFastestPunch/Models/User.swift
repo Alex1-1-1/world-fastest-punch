@@ -21,12 +21,14 @@ struct User: Codable, Identifiable {
 
 // MARK: - User Profile Model
 struct UserProfile: Codable, Identifiable {
-    let id: Int
+    let id: Int?  // Optional に変更
     let profileImage: String?
     let bio: String
     let role: String
     let createdAt: String
     let updatedAt: String
+    let username: String  // 追加
+    let email: String     // 追加
     
     enum CodingKeys: String, CodingKey {
         case id
@@ -35,14 +37,21 @@ struct UserProfile: Codable, Identifiable {
         case role
         case createdAt = "created_at"
         case updatedAt = "updated_at"
+        case username
+        case email
     }
 }
 
 // MARK: - Auth Response
 struct AuthResponse: Codable {
     let access: String
-    let refresh: String
+    let refresh: String?
     let user: User
+}
+
+// MARK: - Refresh Response
+struct RefreshResponse: Codable {
+    let access: String
 }
 
 // MARK: - Login Request

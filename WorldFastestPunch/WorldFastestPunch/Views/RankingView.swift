@@ -16,7 +16,7 @@ struct RankingView: View {
     ]
     
     var filteredSubmissions: [Submission] {
-        let judgedSubmissions = submissions.filter { $0.isJudged && !$0.isRejected }
+        let judgedSubmissions = submissions.filter { $0.isJudged && $0.isRejected != true }
         
         switch selectedCategory {
         case "OVERALL":

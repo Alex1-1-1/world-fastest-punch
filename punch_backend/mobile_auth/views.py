@@ -1,6 +1,7 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework_simplejwt.views import TokenRefreshView
 from .serializers import MobileLoginSerializer, MobileRegisterSerializer
 
 class MobileJWTLoginView(APIView):
@@ -22,3 +23,14 @@ class MobileJWTRegisterView(APIView):
         if serializer.is_valid():
             return Response(serializer.save(), status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class MobileJWTRefreshView(TokenRefreshView):
+    authentication_classes = []
+    permission_classes = []
+    
+    def post(self, request, *args, **kwargs):
+        response = super().post(request, *args, **kwargs)
+        if response.status_code == 200:
+            # レスポンスにuser情報も含める（必要に応じて）
+            return response
+        return response

@@ -33,11 +33,11 @@ struct ProfileView: View {
                         
                         // ユーザー情報
                         VStack(spacing: 8) {
-                            Text(apiService.currentUser?.username ?? "ユーザー")
+                            Text(userProfile?.username ?? apiService.currentUser?.username ?? "ユーザー")
                                 .font(.title2)
                                 .fontWeight(.bold)
                             
-                            Text(apiService.currentUser?.email ?? "")
+                            Text(userProfile?.email ?? apiService.currentUser?.email ?? "")
                                 .font(.subheadline)
                                 .foregroundColor(.secondary)
                             
@@ -97,7 +97,7 @@ struct ProfileView: View {
                         
                         StatCardView(
                             title: "承認済み",
-                            value: "\(mySubmissions.filter { $0.isJudged && !$0.isRejected }.count)",
+                            value: "\(mySubmissions.filter { $0.isJudged && $0.isRejected != true }.count)",
                             color: .green
                         )
                         

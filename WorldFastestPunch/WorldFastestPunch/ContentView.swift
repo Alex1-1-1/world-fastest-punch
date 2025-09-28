@@ -3,10 +3,16 @@ import SwiftUI
 struct ContentView: View {
     @StateObject private var apiService = APIService.shared
     @State private var selectedTab = 0
+    @State private var showSplash = true
     
     var body: some View {
         Group {
-            if apiService.isAuthenticated {
+            if showSplash {
+                // スプラッシュ画面を表示
+                SplashView {
+                    showSplash = false
+                }
+            } else if apiService.isAuthenticated {
                 // 認証済みの場合はメインアプリを表示
                 TabView(selection: $selectedTab) {
             // ギャラリータブ

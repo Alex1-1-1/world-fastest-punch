@@ -3,7 +3,7 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
-from mobile_auth.views import MobileJWTLoginView, MobileJWTRegisterView
+from mobile_auth.views import MobileJWTLoginView, MobileJWTRegisterView, MobileJWTRefreshView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -13,6 +13,7 @@ urlpatterns = [
     # iOS専用のJWT認証エンドポイント
     path('api/auth/jwt/login/', MobileJWTLoginView.as_view(), name='mobile_jwt_login'),
     path('api/auth/jwt/register/', MobileJWTRegisterView.as_view(), name='mobile_jwt_register'),
+    path('api/auth/jwt/refresh/', MobileJWTRefreshView.as_view(), name='mobile_jwt_refresh'),
 ]
 
 # メディアファイルの配信設定（本番環境でも有効にする）
